@@ -27,7 +27,16 @@ const columns = [
     enableSorting: true,
   }),
   columnHelper.accessor('holderName', {
-    header: 'Nama Pemegang',
+    header: () => (
+      <div className="left-0 sticky z-10 bg-white min-w-[200px]">
+        Nama Pemegang
+      </div>
+    ),
+    cell: (info) => (
+      <div className="left-0 sticky z-10 bg-white min-w-[200px]">
+        {info.getValue()}
+      </div>
+    ),
     enableSorting: true,
   }),
   columnHelper.accessor('holderType', {
@@ -57,6 +66,9 @@ const columns = [
     header: '% Pemilikan',
     cell: (info) => `${info.getValue()}%`,
     enableSorting: true,
+    meta: {
+      className: 'text-right min-w-[80px]',
+    },
   }),
 ];
 
@@ -137,7 +149,7 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
       <div className="flex justify-end mb-4">
         <button
           onClick={handleExportCSV}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center justify-center w-full sm:w-auto min-h-12 px-4 py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -146,7 +158,7 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="max-w-full overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
         <table className="min-w-full bg-white border border-gray-200">
           <thead className="bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -154,7 +166,7 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                    className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center">
@@ -163,8 +175,9 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
-                          )}
-                      {{{
+                          )
+                      }
+                      {{
                         asc: (
                           <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -188,7 +201,7 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
