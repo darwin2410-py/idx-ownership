@@ -23,14 +23,20 @@ const columnHelper = createColumnHelper<StockData>();
 
 const columns = [
   columnHelper.accessor('code', {
-    header: 'Kode Saham',
+    header: () => (
+      <div className="left-0 sticky z-10 bg-white min-w-[100px]">
+        Kode Saham
+      </div>
+    ),
     cell: (info) => (
-      <Link
-        href={`/stocks/${info.getValue()}`}
-        className="text-blue-600 hover:text-blue-800 font-medium"
-      >
-        {info.getValue()}
-      </Link>
+      <div className="left-0 sticky z-10 bg-white min-w-[100px]">
+        <Link
+          href={`/stocks/${info.getValue()}`}
+          className="text-blue-600 hover:text-blue-800 font-medium"
+        >
+          {info.getValue()}
+        </Link>
+      </div>
     ),
   }),
   columnHelper.accessor('name', {
@@ -109,7 +115,7 @@ export function StocksTable({ data, initialSort }: StocksTableProps) {
   });
 
   return (
-    <div className="overflow-x-auto">
+    <div className="max-w-full overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
       <table className="min-w-full bg-white border border-gray-200">
         <thead className="bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -117,7 +123,7 @@ export function StocksTable({ data, initialSort }: StocksTableProps) {
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex items-center">
@@ -126,8 +132,9 @@ export function StocksTable({ data, initialSort }: StocksTableProps) {
                       : flexRender(
                           header.column.columnDef.header,
                           header.getContext()
-                        )}
-                    {{{
+                        )
+                    }
+                    {{
                       asc: (
                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -151,7 +158,7 @@ export function StocksTable({ data, initialSort }: StocksTableProps) {
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                  className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900"
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
