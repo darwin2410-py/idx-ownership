@@ -75,9 +75,32 @@ const columns = [
 interface HoldersTableProps {
   data: HolderData[];
   stockCode: string;
+  isLoading?: boolean;
 }
 
-export function HoldersTable({ data, stockCode }: HoldersTableProps) {
+function SkeletonRow() {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-8"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-48"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-32"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-16"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+      </td>
+    </tr>
+  );
+}
+
+export function HoldersTable({ data, stockCode, isLoading = false }: HoldersTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -143,6 +166,128 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
       alert('Gagal mengekspor data. Silakan coba lagi.');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="flex justify-end mb-4">
+          <button
+            disabled
+            className="inline-flex items-center justify-center w-full sm:w-auto min-h-12 px-4 py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 opacity-50 cursor-not-allowed"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Ekspor CSV
+          </button>
+        </div>
+
+        <div className="max-w-full overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="min-w-full bg-white border border-gray-200">
+            <thead className="bg-gray-50">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                    >
+                      <div className="flex items-center">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )
+                        }
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <SkeletonRow key={i} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  const handleExportCSV = async () => {
+    try {
+      const response = await fetch(`/api/stocks/${stockCode}/export`);
+      if (!response.ok) {
+        throw new Error('Failed to export CSV');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${stockCode}_ownership_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Gagal mengekspor data. Silakan coba lagi.');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="flex justify-end mb-4">
+          <button
+            disabled
+            className="inline-flex items-center justify-center w-full sm:w-auto min-h-12 px-4 py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 opacity-50 cursor-not-allowed"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Ekspor CSV
+          </button>
+        </div>
+
+        <div className="max-w-full overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="min-w-full bg-white border border-gray-200">
+            <thead className="bg-gray-50">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                    >
+                      <div className="flex items-center">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )
+                        }
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <SkeletonRow key={i} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
