@@ -13,11 +13,11 @@
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 4/4 | Complete | 01-01, 01-02, 01-03, 01-04 |
 | 2. Core Visualization | 3/4 | In progress | 02-01, 02-02, 02-03 |
-| 2.1. Solve Error | 0/0 | Not started | - |
+| 2.1. Solve Error | 0/1 | Ready to execute | 02.1-01 |
 | 3. User Experience | 0/3 | Not started | - |
 | 4. Enhancement Features | 0/3 | Not started | - |
 
-**Overall Progress:** 7/14 plans complete (50%)
+**Overall Progress:** 7/15 plans complete (47%)
 
 ---
 
@@ -101,7 +101,10 @@
 3. .env.example file documents required environment variables
 4. Database schema migrations run successfully
 
-**Plans:** TBD
+**Plans:** 1 plan in 1 wave
+
+**Wave 1:**
+- [ ] [02.1-01-PLAN.md](.planning/phases/02.1-solve-error/02.1-01-PLAN.md) — Environment setup with .env.example and README documentation
 
 ---
 
@@ -167,6 +170,7 @@ Deferred to post-MVP releases:
 | CORE-02: Search & Filter | Phase 2 | Pending | 02-04 |
 | CORE-03: Data Freshness Indicator | Phase 2 | ✅ Complete | 02-01, 02-02 |
 | CORE-04: Export to CSV | Phase 2 | ✅ Complete | 02-02 |
+| ENV-01: Environment Setup | Phase 2.1 | Pending | 02.1-01 |
 | UX-01: Responsive Mobile Layout | Phase 3 | Pending | - |
 | UX-02: Loading States | Phase 3 | Pending | - |
 | UX-03: Landing Page | Phase 3 | Pending | - |
@@ -174,7 +178,7 @@ Deferred to post-MVP releases:
 | HOLD-01: Per-Holder View | Phase 4 | Pending | - |
 | DASH-01: Top Movers Dashboard | Phase 4 | Pending | - |
 
-**Coverage:** 16/16 requirements mapped (100%) ✓
+**Coverage:** 17/17 requirements mapped (100%) ✓
 
 ---
 
@@ -229,4 +233,4 @@ Explicitly excluded from v1:
 ---
 
 *Last updated: 2026-03-14*
-*Next action: `/gsd:plan-phase 2.1`*
+*Next action: `/gsd:execute-phase 2.1`*
