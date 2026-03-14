@@ -5,7 +5,7 @@
  */
 
 import { db, schema } from '../db';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, or, ilike } from 'drizzle-orm';
 import type {
   ExtractedOwnershipRecord,
   ExtractedPeriod,
@@ -435,6 +435,102 @@ export async function findAllStocksWithTopHolder(periodId?: string): Promise<{
       and(
         eq(schema.ownershipRecords.periodId, targetPeriod),
         eq(schema.ownershipRecords.rank, 1) // Top holder only
+      )
+    );
+
+  // Transform to expected format
+  const stockMap = new Map<string, any>();
+
+  for (const row of result) {
+    if (!stockMap.has(row.emiten.id)) {
+      stockMap.set(row.emiten.id, {
+        emiten: row.emiten,
+        topHolder: {
+          name: row.holderName,
+          percentage: row.percentage,
+          rank: row.rank,
+        },
+        updatedAt: `${row.year}-${row.month.toString().padStart(2, '0')}`,
+      });
+    }
+  }
+
+  return Array.from(stockMap.values());
+}
+
+/**
+ * Search stocks with optional filters
+ * Supports filtering by stock code and/or holder name
+ */
+export async function searchStocksWithFilters(filters: {
+  stockCode?: string;
+  holderName?: string;
+  periodId?: string;
+}): Promise<{
+  emiten: Emiten;
+  topHolder: {
+    name: string;
+    percentage: string;
+    rank: number;
+  } | null;
+  updatedAt: string;
+}[]> {
+  // If no period specified, use latest period
+  let targetPeriod = filters.periodId;
+  if (!targetPeriod) {
+    const latestPeriod = await db
+      .select()
+      .from(schema.periods)
+      .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+      .limit(1);
+    if (latestPeriod.length === 0) {
+      return [];
+    }
+    targetPeriod = latestPeriod[0].id;
+  }
+
+  // Build query conditions
+  const conditions = [];
+
+  // Filter by stock code (partial match, case-insensitive)
+  if (filters.stockCode) {
+    conditions.push(ilike(schema.emiten.id, `%${filters.stockCode}%`));
+  }
+
+  // Filter by holder name (partial match, case-insensitive)
+  if (filters.holderName) {
+    conditions.push(ilike(schema.holders.canonicalName, `%${filters.holderName}%`));
+  }
+
+  // Query with filters
+  const result = await db
+    .select({
+      emiten: schema.emiten,
+      holderName: schema.holders.canonicalName,
+      rank: schema.ownershipRecords.rank,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+      periodId: schema.ownershipRecords.periodId,
+      year: schema.periods.year,
+      month: schema.periods.month,
+    })
+    .from(schema.emiten)
+    .innerJoin(
+      schema.ownershipRecords,
+      eq(schema.ownershipRecords.emitenId, schema.emiten.id)
+    )
+    .innerJoin(
+      schema.holders,
+      eq(schema.holders.id, schema.ownershipRecords.holderId)
+    )
+    .innerJoin(
+      schema.periods,
+      eq(schema.periods.id, schema.ownershipRecords.periodId)
+    )
+    .where(
+      and(
+        eq(schema.ownershipRecords.periodId, targetPeriod),
+        eq(schema.ownershipRecords.rank, 1),
+        conditions.length > 0 ? or(...conditions) : undefined
       )
     );
 
