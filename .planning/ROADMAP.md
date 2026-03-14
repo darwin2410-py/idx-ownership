@@ -123,7 +123,14 @@
 4. Landing page clearly explains the tool's purpose with hero section, how it works explanation, and CTA button to browse stocks
 5. Footer includes FAQ section about data source and update frequency, plus credits and disclaimer
 
-**Plans:** TBD
+**Plans:** 3 plans in 2 waves
+
+**Wave 1 (Parallel):**
+- [ ] [03-01-PLAN.md](.planning/phases/03-user-experience/03-01-PLAN.md) — Responsive mobile layout for tables and pages
+- [ ] [03-02-PLAN.md](.planning/phases/03-user-experience/03-02-PLAN.md) — Loading states, error handling, and empty states
+
+**Wave 2:**
+- [ ] [03-03-PLAN.md](.planning/phases/03-user-experience/03-03-PLAN.md) — Landing page with hero, how it works, and FAQ
 
 ---
 
@@ -171,9 +178,9 @@ Deferred to post-MVP releases:
 | CORE-03: Data Freshness Indicator | Phase 2 | ✅ Complete | 02-01, 02-02 |
 | CORE-04: Export to CSV | Phase 2 | ✅ Complete | 02-02 |
 | ENV-01: Environment Setup | Phase 2.1 | Pending | 02.1-01 |
-| UX-01: Responsive Mobile Layout | Phase 3 | Pending | - |
-| UX-02: Loading States | Phase 3 | Pending | - |
-| UX-03: Landing Page | Phase 3 | Pending | - |
+| UX-01: Responsive Mobile Layout | Phase 3 | Pending | 03-01 |
+| UX-02: Loading States | Phase 3 | Pending | 03-02 |
+| UX-03: Landing Page | Phase 3 | Pending | 03-03 |
 | HIST-01: Historical Comparison | Phase 4 | Pending | - |
 | HOLD-01: Per-Holder View | Phase 4 | Pending | - |
 | DASH-01: Top Movers Dashboard | Phase 4 | Pending | - |
