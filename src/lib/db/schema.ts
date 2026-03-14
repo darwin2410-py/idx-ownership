@@ -10,14 +10,6 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 
-// Export the schema for use in queries
-export const schema = {
-  periods,
-  emiten,
-  holders,
-  ownershipRecords,
-};
-
 // periods table - time periods for monthly data
 export const periods = pgTable('periods', {
   id: text('id').primaryKey(), // Format: "YYYY-MM" e.g., "2026-03"
@@ -69,3 +61,11 @@ export const ownershipRecords = pgTable('ownership_records', {
   holderIdIdx: index('ownership_records_holder_id_idx').on(table.holderId),
   periodEmitenIdx: index('ownership_records_period_emiten_idx').on(table.periodId, table.emitenId),
 }));
+
+// Export the schema for use in queries
+export const schema = {
+  periods,
+  emiten,
+  holders,
+  ownershipRecords,
+};
