@@ -1,10 +1,13 @@
 'use client';
 
+import { useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
+  SortingState,
 } from '@tanstack/react-table';
 
 type HolderData = {
@@ -21,9 +24,11 @@ const columns = [
   columnHelper.accessor('rank', {
     header: 'Peringkat',
     cell: (info) => `#${info.getValue()}`,
+    enableSorting: true,
   }),
   columnHelper.accessor('holderName', {
     header: 'Nama Pemegang',
+    enableSorting: true,
   }),
   columnHelper.accessor('holderType', {
     header: 'Tipe',
@@ -38,6 +43,7 @@ const columns = [
       };
       return typeMap[type] || type;
     },
+    enableSorting: true,
   }),
   columnHelper.accessor('sharesOwned', {
     header: 'Jumlah Saham',
@@ -45,10 +51,12 @@ const columns = [
       const num = info.getValue();
       return new Intl.NumberFormat('id-ID').format(num);
     },
+    enableSorting: true,
   }),
   columnHelper.accessor('ownershipPercentage', {
     header: '% Pemilikan',
     cell: (info) => `${info.getValue()}%`,
+    enableSorting: true,
   }),
 ];
 
@@ -58,10 +66,48 @@ interface HoldersTableProps {
 }
 
 export function HoldersTable({ data, stockCode }: HoldersTableProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Initialize sorting from URL params
+  const [sorting, setSorting] = useMemo<SortingState>(() => {
+    const sortId = searchParams.get('sort');
+    const sortOrder = searchParams.get('order');
+
+    if (sortId) {
+      return [{
+        id: sortId,
+        desc: sortOrder === 'desc',
+      }];
+    }
+
+    return []; // Default: no sorting (use rank order from server)
+  }, [searchParams]);
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    state: {
+      sorting,
+    },
+    onSortingChange: (newSorting) => {
+      // Update URL with new sort parameters
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (newSorting.length === 0) {
+        params.delete('sort');
+        params.delete('order');
+      } else {
+        params.set('sort', newSorting[0].id);
+        params.set('order', newSorting[0].desc ? 'desc' : 'asc');
+      }
+
+      // Navigate with new URL params (triggers server refetch)
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    enableSorting: true,
+    manualSorting: true, // Server-side sorting
   });
 
   const handleExportCSV = async () => {
@@ -75,7 +121,7 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${stockCode}_ownership_${new Date().toISOString().slice(0, 7)}.csv`;
+      a.download = `${stockCode}_ownership_${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -108,14 +154,29 @@ export function HoldersTable({ data, stockCode }: HoldersTableProps) {
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                    onClick={header.column.getToggleSortingHandler()}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                    <div className="flex items-center">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                      {{{
+                        asc: (
+                          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        ),
+                        desc: (
+                          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        ),
+                      }[header.column.getIsSorted() as string] ?? null}
+                    </div>
                   </th>
                 ))}
               </tr>
