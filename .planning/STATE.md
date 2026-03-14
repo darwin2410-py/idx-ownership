@@ -2,7 +2,7 @@
 
 **Project:** IDX Ownership Visualizer
 **Last Updated:** 2026-03-14
-**Session:** 3 - Plan 02-03 Complete
+**Session:** 4 - Plan 03-01 Complete
 
 ---
 
@@ -21,18 +21,29 @@ Building data pipeline and core visualization features to enable users to search
 
 ## Current Position
 
-**Phase:** 2 (Core Visualization)
-**Plan:** 03 (Sortable Tables with URL State Encoding) - COMPLETE
-**Status:** Sortable tables with visual indicators and URL state encoding
-**Progress Bar:** ███████░░░ 50% (7/14 plans)
+**Phase:** 3 (User Experience)
+**Plan:** 01 (Mobile-Responsive Layout) - COMPLETE
+**Status:** Mobile-responsive tables with sticky columns and touch-friendly controls
+**Progress Bar:** ████████░░ 57% (8/14 plans)
 
 ### Next Action
-Continue with Plan 02-04 (Search and Filter with Debouncing)
+Continue with Plan 03-02 (Loading States and Skeleton Screens)
 
 ### Context File
-`.planning/phases/02-core-visualization/02-CONTEXT.md` - Phase 2 implementation decisions captured
+`.planning/phases/03-user-experience/03-CONTEXT.md` - Phase 3 implementation decisions
 
 ### Recent Work
+**Plan 03-01 Complete:** Mobile-Responsive Layout
+- Added sticky first column for "Kode Saham" and "Nama Pemegang" with left-0 and z-10
+- Responsive padding: px-2 sm:px-4 md:px-6 for tighter mobile spacing
+- Responsive text sizes: text-[10px] sm:text-xs for headers, text-xs sm:text-sm for cells
+- Touch-friendly controls with min-h-12 (48px) for all buttons and inputs
+- Container-level horizontal scroll with max-w-full and -mx-4 sm:mx-0
+- No body scroll: overflow-x-auto only on table containers
+- 16px base text on inputs prevents iOS Safari auto-zoom
+- All 3 tasks completed in 142 seconds
+- Commits: d72c933, 836533a, 3fbfcee
+
 **Plan 02-03 Complete:** Sortable Tables with URL State Encoding
 - Added client-side sorting to stocks table with SortingState and getSortedRowModel
 - Implemented URL state encoding with window.history.replaceState
@@ -157,6 +168,21 @@ Continue with Plan 02-04 (Search and Filter with Debouncing)
 9. **Indonesian Localization** (Decision ID: KD-009)
    - Rationale: User familiarity, professional appearance for local market
    - Outcome: ✅ Implemented (Indonesian headers, holder types, month names)
+   - Date: 2026-03-14
+
+10. **Mobile-First Responsive Design** (Decision ID: KD-010)
+   - Rationale: Indonesian users heavily use mobile devices, need touch-friendly interface
+   - Outcome: ✅ Implemented (sticky columns, 48px touch targets, responsive breakpoints)
+   - Date: 2026-03-14
+
+11. **Sticky First Column for Tables** (Decision ID: KD-011)
+   - Rationale: Users need context (stock code or holder name) when scrolling horizontally
+   - Outcome: ✅ Implemented (position: sticky with left-0 and z-10, bg-white)
+   - Date: 2026-03-14
+
+12. **Touch Target Sizing 48px Minimum** (Decision ID: KD-012)
+   - Rationale: WCAG 2.1 AAA recommends 44x44px, 48px provides comfortable margin
+   - Outcome: ✅ Implemented (min-h-12 on all buttons and inputs)
    - Date: 2026-03-14
 
 ### Stack Choices
@@ -301,4 +327,4 @@ None yet (project initialization).
 ---
 
 *Last updated: 2026-03-14*
-*Session: 2 - Plan 02-02 Complete*
+*Session: 4 - Plan 03-01 Complete*
