@@ -11,12 +11,12 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 0/3 | Not started | - |
+| 1. Data Foundation | 0/4 | Ready for execution | - |
 | 2. Core Visualization | 0/4 | Not started | - |
 | 3. User Experience | 0/3 | Not started | - |
 | 4. Enhancement Features | 0/3 | Not started | - |
 
-**Overall Progress:** 0/13 plans complete (0%)
+**Overall Progress:** 0/14 plans complete (0%)
 
 ---
 
@@ -45,7 +45,15 @@
 3. Data validation checks catch missing or malformed data, validate ownership percentages sum to ~100%, and log results for monitoring
 4. Database supports historical data storage with proper indexing for time-series queries
 
-**Plans:** TBD
+**Plans:** 4 plans in 2 waves
+
+**Wave 1 (Parallel):**
+- [ ] [01-01-PLAN.md](.planning/phases/01-data-foundation/01-01-PLAN.md) — Database schema setup with Drizzle ORM (4 tables, composite keys, indexes)
+- [ ] [01-02-PLAN.md](.planning/phases/01-data-foundation/01-02-PLAN.md) — PDF extraction pipeline with pdf-parse and fallback strategies
+
+**Wave 2 (Parallel):**
+- [ ] [01-03-PLAN.md](.planning/phases/01-data-foundation/01-03-PLAN.md) — Data validation with Zod schemas
+- [ ] [01-04-PLAN.md](.planning/phases/01-data-foundation/01-04-PLAN.md) — Import workflow with API endpoint and CLI script
 
 ---
 
@@ -120,23 +128,23 @@ Deferred to post-MVP releases:
 
 ## Traceability Matrix
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| DATA-01: PDF Extraction Pipeline | Phase 1 | Pending |
-| DATA-02: Database Schema Design | Phase 1 | Pending |
-| DATA-03: Data Quality Validation | Phase 1 | Pending |
-| EMIT-01: Stock Listing Page | Phase 2 | Pending |
-| EMIT-02: Stock Detail Page | Phase 2 | Pending |
-| CORE-01: Sortable Tables | Phase 2 | Pending |
-| CORE-02: Search & Filter | Phase 2 | Pending |
-| CORE-03: Data Freshness Indicator | Phase 2 | Pending |
-| CORE-04: Export to CSV | Phase 2 | Pending |
-| UX-01: Responsive Mobile Layout | Phase 3 | Pending |
-| UX-02: Loading States | Phase 3 | Pending |
-| UX-03: Landing Page | Phase 3 | Pending |
-| HIST-01: Historical Comparison | Phase 4 | Pending |
-| HOLD-01: Per-Holder View | Phase 4 | Pending |
-| DASH-01: Top Movers Dashboard | Phase 4 | Pending |
+| Requirement | Phase | Status | Plans |
+|-------------|-------|--------|-------|
+| DATA-01: PDF Extraction Pipeline | Phase 1 | Pending | 01-02, 01-04 |
+| DATA-02: Database Schema Design | Phase 1 | Pending | 01-01 |
+| DATA-03: Data Quality Validation | Phase 1 | Pending | 01-03, 01-04 |
+| EMIT-01: Stock Listing Page | Phase 2 | Pending | - |
+| EMIT-02: Stock Detail Page | Phase 2 | Pending | - |
+| CORE-01: Sortable Tables | Phase 2 | Pending | - |
+| CORE-02: Search & Filter | Phase 2 | Pending | - |
+| CORE-03: Data Freshness Indicator | Phase 2 | Pending | - |
+| CORE-04: Export to CSV | Phase 2 | Pending | - |
+| UX-01: Responsive Mobile Layout | Phase 3 | Pending | - |
+| UX-02: Loading States | Phase 3 | Pending | - |
+| UX-03: Landing Page | Phase 3 | Pending | - |
+| HIST-01: Historical Comparison | Phase 4 | Pending | - |
+| HOLD-01: Per-Holder View | Phase 4 | Pending | - |
+| DASH-01: Top Movers Dashboard | Phase 4 | Pending | - |
 
 **Coverage:** 16/16 requirements mapped (100%) ✓
 
@@ -191,4 +199,4 @@ Explicitly excluded from v1:
 ---
 
 *Last updated: 2026-03-14*
-*Next action: `/gsd:plan-phase 1`*
+*Next action: `/gsd:execute-phase 01-data-foundation`*
