@@ -12,7 +12,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 4/4 | Complete | 01-01, 01-02, 01-03, 01-04 |
-| 2. Core Visualization | 3/4 | In progress | 02-01, 02-02, 02-04 |
+| 2. Core Visualization | 3/4 | In progress | 02-01, 02-02, 02-03 |
 | 3. User Experience | 0/3 | Not started | - |
 | 4. Enhancement Features | 0/3 | Not started | - |
 
@@ -80,8 +80,8 @@
 - [x] [02-02-PLAN.md](.planning/phases/02-core-visualization/02-02-PLAN.md) — Stock detail page with holders table and CSV export ✅
 
 **Wave 2 (Parallel):**
-- [ ] [02-03-PLAN.md](.planning/phases/02-core-visualization/02-03-PLAN.md) — Sortable tables with URL state encoding
-- [x] [02-04-PLAN.md](.planning/phases/02-core-visualization/02-04-PLAN.md) — Search and filter with debounced input ✅
+- [x] [02-03-PLAN.md](.planning/phases/02-core-visualization/02-03-PLAN.md) — Sortable tables with URL state encoding ✅
+- [ ] [02-04-PLAN.md](.planning/phases/02-core-visualization/02-04-PLAN.md) — Search and filter with debounced input
 
 ---
 
@@ -143,8 +143,8 @@ Deferred to post-MVP releases:
 | DATA-03: Data Quality Validation | Phase 1 | ✅ Complete | 01-03, 01-04 |
 | EMIT-01: Stock Listing Page | Phase 2 | ✅ Complete | 02-01 |
 | EMIT-02: Stock Detail Page | Phase 2 | ✅ Complete | 02-02 |
-| CORE-01: Sortable Tables | Phase 2 | Pending | 02-03 |
-| CORE-02: Search & Filter | Phase 2 | ✅ Complete | 02-04 |
+| CORE-01: Sortable Tables | Phase 2 | ✅ Complete | 02-03 |
+| CORE-02: Search & Filter | Phase 2 | Pending | 02-04 |
 | CORE-03: Data Freshness Indicator | Phase 2 | ✅ Complete | 02-01, 02-02 |
 | CORE-04: Export to CSV | Phase 2 | ✅ Complete | 02-02 |
 | UX-01: Responsive Mobile Layout | Phase 3 | Pending | - |

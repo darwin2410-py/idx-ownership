@@ -2,7 +2,7 @@
 
 **Project:** IDX Ownership Visualizer
 **Last Updated:** 2026-03-14
-**Session:** 2 - Plan 02-04 Complete
+**Session:** 3 - Plan 02-03 Complete
 
 ---
 
@@ -22,17 +22,29 @@ Building data pipeline and core visualization features to enable users to search
 ## Current Position
 
 **Phase:** 2 (Core Visualization)
-**Plan:** 04 (Search and Filter) - COMPLETE
-**Status:** Search and filter functionality with debouncing and URL state encoding
-**Progress Bar:** ███████░░░ 43% (6/14 plans)
+**Plan:** 03 (Sortable Tables with URL State Encoding) - COMPLETE
+**Status:** Sortable tables with visual indicators and URL state encoding
+**Progress Bar:** ███████░░░ 50% (7/14 plans)
 
 ### Next Action
-Continue with Plan 02-03 (Sortable Tables with URL State Encoding)
+Continue with Plan 02-04 (Search and Filter with Debouncing)
 
 ### Context File
 `.planning/phases/02-core-visualization/02-CONTEXT.md` - Phase 2 implementation decisions captured
 
 ### Recent Work
+**Plan 02-03 Complete:** Sortable Tables with URL State Encoding
+- Added client-side sorting to stocks table with SortingState and getSortedRowModel
+- Implemented URL state encoding with window.history.replaceState
+- Added visual sort indicators (up/down arrows) using SVG icons
+- Made column headers clickable with cursor pointer and hover effects
+- Custom sorting function for percentage column (string to number conversion)
+- Added server-side sorting to holders table with manualSorting flag
+- Implemented URL params update with router.push and scroll: false
+- Added server-side sorting logic to detail page with percentage conversion
+- All 3 tasks completed in 119 seconds
+- Commits: db2c845, e5e6ee3, 23028fa
+
 **Plan 02-01 Complete:** Stock Listing Page with TanStack Table
 - Created `/stocks` listing page with Server Component data fetching
 - Built StocksTable component using TanStack Table v8 with Indonesian column headers
