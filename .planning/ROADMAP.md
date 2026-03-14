@@ -12,7 +12,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 4/4 | Complete | 01-01, 01-02, 01-03, 01-04 |
-| 2. Core Visualization | 0/4 | Not started | - |
+| 2. Core Visualization | 0/4 | Planning complete | - |
 | 3. User Experience | 0/3 | Not started | - |
 | 4. Enhancement Features | 0/3 | Not started | - |
 
@@ -73,7 +73,15 @@
 5. User can see "Data per: [Month Year]" badge on all pages showing data freshness in Indonesian format
 6. User can export ownership data to CSV with UTF-8 encoding and proper headers for offline analysis
 
-**Plans:** TBD
+**Plans:** 4 plans in 2 waves
+
+**Wave 1 (Parallel):**
+- [ ] [02-01-PLAN.md](.planning/phases/02-core-visualization/02-01-PLAN.md) — Stock listing page with TanStack Table and data freshness badge
+- [ ] [02-02-PLAN.md](.planning/phases/02-core-visualization/02-02-PLAN.md) — Stock detail page with holders table and CSV export
+
+**Wave 2 (Parallel):**
+- [ ] [02-03-PLAN.md](.planning/phases/02-core-visualization/02-03-PLAN.md) — Sortable tables with URL state encoding
+- [ ] [02-04-PLAN.md](.planning/phases/02-core-visualization/02-04-PLAN.md) — Search and filter with debounced input
 
 ---
 
@@ -130,15 +138,15 @@ Deferred to post-MVP releases:
 
 | Requirement | Phase | Status | Plans |
 |-------------|-------|--------|-------|
-| DATA-01: PDF Extraction Pipeline | Phase 1 | Pending | 01-02, 01-04 |
+| DATA-01: PDF Extraction Pipeline | Phase 1 | ✅ Complete | 01-02, 01-04 |
 | DATA-02: Database Schema Design | Phase 1 | ✅ Complete | 01-01 |
-| DATA-03: Data Quality Validation | Phase 1 | Pending | 01-03, 01-04 |
-| EMIT-01: Stock Listing Page | Phase 2 | Pending | - |
-| EMIT-02: Stock Detail Page | Phase 2 | Pending | - |
-| CORE-01: Sortable Tables | Phase 2 | Pending | - |
-| CORE-02: Search & Filter | Phase 2 | Pending | - |
-| CORE-03: Data Freshness Indicator | Phase 2 | Pending | - |
-| CORE-04: Export to CSV | Phase 2 | Pending | - |
+| DATA-03: Data Quality Validation | Phase 1 | ✅ Complete | 01-03, 01-04 |
+| EMIT-01: Stock Listing Page | Phase 2 | Pending | 02-01 |
+| EMIT-02: Stock Detail Page | Phase 2 | Pending | 02-02 |
+| CORE-01: Sortable Tables | Phase 2 | Pending | 02-03 |
+| CORE-02: Search & Filter | Phase 2 | Pending | 02-04 |
+| CORE-03: Data Freshness Indicator | Phase 2 | Pending | 02-01, 02-02 |
+| CORE-04: Export to CSV | Phase 2 | Pending | 02-02 |
 | UX-01: Responsive Mobile Layout | Phase 3 | Pending | - |
 | UX-02: Loading States | Phase 3 | Pending | - |
 | UX-03: Landing Page | Phase 3 | Pending | - |
@@ -199,4 +207,4 @@ Explicitly excluded from v1:
 ---
 
 *Last updated: 2026-03-14*
-*Next action: `/gsd:execute-phase 01-data-foundation`*
+*Next action: `/gsd:execute-phase 02-core-visualization`*
