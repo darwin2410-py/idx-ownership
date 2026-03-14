@@ -379,3 +379,81 @@ export async function getLatestPeriod(): Promise<Period | null> {
 
   return period || null;
 }
+
+/**
+ * Find all stocks with their top holder information
+ * Returns array of stocks with top holder name and percentage
+ */
+export async function findAllStocksWithTopHolder(periodId?: string): Promise<{
+  emiten: Emiten;
+  topHolder: {
+    name: string;
+    percentage: string;
+    rank: number;
+  } | null;
+  updatedAt: string;
+}[]> {
+  // If no period specified, use latest period
+  let targetPeriod = periodId;
+  if (!targetPeriod) {
+    const latestPeriod = await db
+      .select()
+      .from(schema.periods)
+      .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+      .limit(1);
+    if (latestPeriod.length === 0) {
+      return []; // No data yet
+    }
+    targetPeriod = latestPeriod[0].id;
+  }
+
+  // Query all stocks with their top holder (rank = 1)
+  const result = await db
+    .select({
+      emiten: schema.emiten,
+      holderName: schema.holders.canonicalName,
+      rank: schema.ownershipRecords.rank,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+      periodId: schema.ownershipRecords.periodId,
+      year: schema.periods.year,
+      month: schema.periods.month,
+    })
+    .from(schema.emiten)
+    .innerJoin(
+      schema.ownershipRecords,
+      eq(schema.ownershipRecords.emitenId, schema.emiten.id)
+    )
+    .innerJoin(
+      schema.holders,
+      eq(schema.holders.id, schema.ownershipRecords.holderId)
+    )
+    .innerJoin(
+      schema.periods,
+      eq(schema.periods.id, schema.ownershipRecords.periodId)
+    )
+    .where(
+      and(
+        eq(schema.ownershipRecords.periodId, targetPeriod),
+        eq(schema.ownershipRecords.rank, 1) // Top holder only
+      )
+    );
+
+  // Transform to expected format
+  const stockMap = new Map<string, any>();
+
+  for (const row of result) {
+    if (!stockMap.has(row.emiten.id)) {
+      stockMap.set(row.emiten.id, {
+        emiten: row.emiten,
+        topHolder: {
+          name: row.holderName,
+          percentage: row.percentage,
+          rank: row.rank,
+        },
+        updatedAt: `${row.year}-${row.month.toString().padStart(2, '0')}`,
+      });
+    }
+  }
+
+  return Array.from(stockMap.values());
+}
