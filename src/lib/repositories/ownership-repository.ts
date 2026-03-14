@@ -5,7 +5,7 @@
  */
 
 import { db, schema } from '../db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import type {
   ExtractedOwnershipRecord,
   ExtractedPeriod,
@@ -294,4 +294,88 @@ export async function findOwnershipRecordsByHolder(
     .select()
     .from(schema.ownershipRecords)
     .where(eq(schema.ownershipRecords.holderId, holderId));
+}
+
+/**
+ * Find all ownership records for a specific stock with holder details
+ * Returns complete ownership data ordered by rank
+ */
+export async function findOwnershipByStockWithHolders(
+  emitenId: string,
+  periodId?: string
+): Promise<{
+  rank: number;
+  holderName: string;
+  holderType: string;
+  sharesOwned: number;
+  ownershipPercentage: string;
+  periodId: string;
+}[]> {
+  // If no period specified, use latest period
+  let targetPeriod = periodId;
+  if (!targetPeriod) {
+    const latestPeriod = await db
+      .select()
+      .from(schema.periods)
+      .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+      .limit(1);
+    if (latestPeriod.length === 0) {
+      return [];
+    }
+    targetPeriod = latestPeriod[0].id;
+  }
+
+  // Query ownership records with holder details
+  const result = await db
+    .select({
+      rank: schema.ownershipRecords.rank,
+      holderName: schema.holders.canonicalName,
+      holderType: schema.holders.type,
+      sharesOwned: schema.ownershipRecords.sharesOwned,
+      ownershipPercentage: schema.ownershipRecords.ownershipPercentage,
+      periodId: schema.ownershipRecords.periodId,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(
+      schema.holders,
+      eq(schema.holders.id, schema.ownershipRecords.holderId)
+    )
+    .where(
+      and(
+        eq(schema.ownershipRecords.emitenId, emitenId),
+        eq(schema.ownershipRecords.periodId, targetPeriod)
+      )
+    )
+    .orderBy(schema.ownershipRecords.rank);
+
+  return result.map((row) => ({
+    ...row,
+    ownershipPercentage: row.ownershipPercentage.toString(),
+  }));
+}
+
+/**
+ * Get stock information by code
+ */
+export async function findEmitenByCode(code: string): Promise<Emiten | null> {
+  const [emiten] = await db
+    .select()
+    .from(schema.emiten)
+    .where(eq(schema.emiten.id, code))
+    .limit(1);
+
+  return emiten || null;
+}
+
+/**
+ * Get latest period from database
+ */
+export async function getLatestPeriod(): Promise<Period | null> {
+  const [period] = await db
+    .select()
+    .from(schema.periods)
+    .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+    .limit(1);
+
+  return period || null;
 }
