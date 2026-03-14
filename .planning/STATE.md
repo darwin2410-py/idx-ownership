@@ -2,7 +2,7 @@
 
 **Project:** IDX Ownership Visualizer
 **Last Updated:** 2026-03-14
-**Session:** 1 - Plans 01-03, 01-04 Complete
+**Session:** 2 - Plan 02-02 Complete
 
 ---
 
@@ -21,18 +21,43 @@ Building data pipeline and core visualization features to enable users to search
 
 ## Current Position
 
-**Phase:** 1 (Data Foundation)
-**Plan:** 04 (Import Workflow & API) - COMPLETE
-**Status:** Complete import workflow with repository pattern, transaction safety, API endpoint, and CLI script
-**Progress Bar:** ██████░░░░░ 21% (3/14 plans)
+**Phase:** 2 (Core Visualization)
+**Plan:** 02 (Stock Detail Page) - COMPLETE
+**Status:** Complete stock listing and detail pages with TanStack Table, Indonesian localization, and CSV export
+**Progress Bar:** ████████░░░ 36% (5/14 plans)
 
 ### Next Action
-Phase 1 complete - Proceed to Phase 2 (Core Visualization)
+Continue with Plan 02-03 (Sortable Tables with URL State Encoding)
 
 ### Context File
-`.planning/phases/01-data-foundation/01-CONTEXT.md` - Phase 1 implementation decisions captured
+`.planning/phases/02-core-visualization/02-CONTEXT.md` - Phase 2 implementation decisions captured
 
 ### Recent Work
+**Plan 02-01 Complete:** Stock Listing Page with TanStack Table
+- Created `/stocks` listing page with Server Component data fetching
+- Built StocksTable component using TanStack Table v8 with Indonesian column headers
+- Added repository functions: `findAllStocksWithTopHolder`, `getLatestPeriod`
+- Data freshness badge showing "Data per: [Month Year]" in Indonesian
+- 1-hour cache revalidation (export const revalidate = 3600)
+- Clickable stock codes linking to detail pages
+- Empty state with Indonesian message when no data available
+- Suspense boundary with loading spinner
+- All 4 tasks completed in 77 seconds
+- Commits: c03c15c, 1bccc36, 0aa6092, ffe4df3
+
+**Plan 02-02 Complete:** Stock Detail Page with CSV Export
+- Created dynamic route `/stocks/[code]` for stock detail pages with Server Components
+- Built HoldersTable component using TanStack Table v8 with Indonesian formatting
+- Added server-side CSV export API endpoint with UTF-8 encoding
+- Implemented repository functions: `findOwnershipByStockWithHolders`, `findEmitenByCode`, `getLatestPeriod`
+- Data freshness badge showing last update period in Indonesian format
+- Parallel data fetching with Promise.all() for optimal performance
+- 1-hour cache revalidation for SEO and performance
+- Empty state when no ownership data available
+- notFound() for invalid stock codes
+- All 4 tasks completed in 95 seconds
+- Commits: 3125af8, 58b15d5, e9759bd, cc70b51
+
 **Plan 01-04 Complete:** Import Workflow & API
 - Created repository layer with upsert operations and transaction support
 - Built import service orchestrating extraction, validation, and storage
@@ -43,15 +68,6 @@ Phase 1 complete - Proceed to Phase 2 (Core Visualization)
 - Transaction rollback on critical validation errors
 - All 4 tasks completed in 124 seconds
 - Commits: 5ae419b, 1908b94, 71d1f55, 85d142c
-
-**Plan 01-03 Complete:** Data Validation with Zod
-- Created validation result types (ValidationError, ValidationWarning, ValidationResult, DataQualityMetrics)
-- Implemented Zod schemas for all ownership fields (stockCode, holderName, shares, percentage, rank)
-- Built validation service with record, percentage, and result validation
-- Added structured logging utilities with severity levels
-- Ownership percentage <100% logs as WARNING (expected for >1% holders only)
-- All 4 tasks completed in 66 seconds
-- Commits: f74d432, be6c5e1, d089d53, 5ccd180
 
 ---
 
@@ -106,13 +122,28 @@ Phase 1 complete - Proceed to Phase 2 (Core Visualization)
    - Outcome: ✅ Implemented (logs WARNING not ERROR for <100% sums)
    - Date: 2026-03-14
 
+7. **Server Component Data Fetching** (Decision ID: KD-007)
+   - Rationale: Best for SEO, fast initial load, less client JS, automatic caching
+   - Outcome: ✅ Implemented (stock detail page with parallel Promise.all() fetching)
+   - Date: 2026-03-14
+
+8. **Server-Side CSV Export** (Decision ID: KD-008)
+   - Rationale: No browser memory limits, handles large datasets, consistent UTF-8 encoding
+   - Outcome: ✅ Implemented (API endpoint at /api/stocks/[code]/export)
+   - Date: 2026-03-14
+
+9. **Indonesian Localization** (Decision ID: KD-009)
+   - Rationale: User familiarity, professional appearance for local market
+   - Outcome: ✅ Implemented (Indonesian headers, holder types, month names)
+   - Date: 2026-03-14
+
 ### Stack Choices
 - **Frontend:** Next.js 15 + React 19 + TypeScript 5.x ✅
 - **Styling:** Tailwind CSS ✅
 - **Database:** Neon + Drizzle ORM ✅
 - **PDF Processing:** pdf-parse ✅
 - **Validation:** Zod ✅
-- **Charts/Tables:** Recharts + TanStack Table 8.x (pending)
+- **Charts/Tables:** TanStack Table 8.x ✅ (implemented in 02-02)
 - **State:** @tanstack/react-query + Zustand (pending)
 - **Deployment:** Vercel (pending)
 
@@ -248,4 +279,4 @@ None yet (project initialization).
 ---
 
 *Last updated: 2026-03-14*
-*Session: 1 - Plan 01-01 Complete*
+*Session: 2 - Plan 02-02 Complete*

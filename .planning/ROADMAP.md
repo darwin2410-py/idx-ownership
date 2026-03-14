@@ -12,11 +12,11 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 4/4 | Complete | 01-01, 01-02, 01-03, 01-04 |
-| 2. Core Visualization | 0/4 | Planning complete | - |
+| 2. Core Visualization | 2/4 | In progress | 02-01, 02-02 |
 | 3. User Experience | 0/3 | Not started | - |
 | 4. Enhancement Features | 0/3 | Not started | - |
 
-**Overall Progress:** 4/14 plans complete (29%)
+**Overall Progress:** 6/14 plans complete (43%)
 
 ---
 
@@ -76,8 +76,8 @@
 **Plans:** 4 plans in 2 waves
 
 **Wave 1 (Parallel):**
-- [ ] [02-01-PLAN.md](.planning/phases/02-core-visualization/02-01-PLAN.md) — Stock listing page with TanStack Table and data freshness badge
-- [ ] [02-02-PLAN.md](.planning/phases/02-core-visualization/02-02-PLAN.md) — Stock detail page with holders table and CSV export
+- [x] [02-01-PLAN.md](.planning/phases/02-core-visualization/02-01-PLAN.md) — Stock listing page with TanStack Table and data freshness badge ✅
+- [x] [02-02-PLAN.md](.planning/phases/02-core-visualization/02-02-PLAN.md) — Stock detail page with holders table and CSV export ✅
 
 **Wave 2 (Parallel):**
 - [ ] [02-03-PLAN.md](.planning/phases/02-core-visualization/02-03-PLAN.md) — Sortable tables with URL state encoding
@@ -141,12 +141,12 @@ Deferred to post-MVP releases:
 | DATA-01: PDF Extraction Pipeline | Phase 1 | ✅ Complete | 01-02, 01-04 |
 | DATA-02: Database Schema Design | Phase 1 | ✅ Complete | 01-01 |
 | DATA-03: Data Quality Validation | Phase 1 | ✅ Complete | 01-03, 01-04 |
-| EMIT-01: Stock Listing Page | Phase 2 | Pending | 02-01 |
-| EMIT-02: Stock Detail Page | Phase 2 | Pending | 02-02 |
+| EMIT-01: Stock Listing Page | Phase 2 | ✅ Complete | 02-01 |
+| EMIT-02: Stock Detail Page | Phase 2 | ✅ Complete | 02-02 |
 | CORE-01: Sortable Tables | Phase 2 | Pending | 02-03 |
 | CORE-02: Search & Filter | Phase 2 | Pending | 02-04 |
-| CORE-03: Data Freshness Indicator | Phase 2 | Pending | 02-01, 02-02 |
-| CORE-04: Export to CSV | Phase 2 | Pending | 02-02 |
+| CORE-03: Data Freshness Indicator | Phase 2 | ✅ Complete | 02-01, 02-02 |
+| CORE-04: Export to CSV | Phase 2 | ✅ Complete | 02-02 |
 | UX-01: Responsive Mobile Layout | Phase 3 | Pending | - |
 | UX-02: Loading States | Phase 3 | Pending | - |
 | UX-03: Landing Page | Phase 3 | Pending | - |
