@@ -2,7 +2,7 @@
 
 **Project:** IDX Ownership Visualizer
 **Version:** 1.0 (MVP)
-**Last Updated:** 2025-03-14
+**Last Updated:** 2026-03-14
 
 ---
 
@@ -214,7 +214,7 @@ The following features are explicitly out of scope for v1:
 
 ## Traceability
 
-Mapping requirements to roadmap phases (to be filled by ROADMAP.md):
+Mapping requirements to roadmap phases:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -227,15 +227,17 @@ Mapping requirements to roadmap phases (to be filled by ROADMAP.md):
 | CORE-02 | Phase 2 | Pending |
 | CORE-03 | Phase 2 | Pending |
 | CORE-04 | Phase 2 | Pending |
-| UX-01 | Phase 2 | Pending |
-| UX-02 | Phase 2 | Pending |
-| UX-03 | Phase 2 | Pending |
-| HIST-01 | Phase 3 | Pending |
-| HOLD-01 | Phase 3 | Pending |
-| DASH-01 | Phase 3 | Pending |
+| UX-01 | Phase 3 | Pending |
+| UX-02 | Phase 3 | Pending |
+| UX-03 | Phase 3 | Pending |
+| HIST-01 | Phase 4 | Pending |
+| HOLD-01 | Phase 4 | Pending |
+| DASH-01 | Phase 4 | Pending |
 
 ---
 
 **Total v1 Requirements:** 13 requirements
+**Total v1.1 Requirements:** 3 requirements
+**Total Requirements Mapped:** 16/16 (100%)
 **Estimated Complexity:** HIGH (PDF extraction, database design, responsive UI)
 **Target Launch:** After Phase 2 completion
