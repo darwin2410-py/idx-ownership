@@ -1,5 +1,6 @@
-import { findAllStocksWithTopHolder, getLatestPeriod } from '@/lib/repositories/ownership-repository';
+import { findAllStocksWithTopHolder, searchStocksWithFilters, getLatestPeriod } from '@/lib/repositories/ownership-repository';
 import { StocksTable } from '@/components/stocks-table';
+import { StocksSearch } from '@/components/stocks-search';
 import { Suspense } from 'react';
 
 // Cache for 1 hour (3600 seconds) - IDX data updates monthly
@@ -30,15 +31,33 @@ function DataFreshnessBadge({ period }: { period: { year: number; month: number 
   );
 }
 
-async function StocksList() {
-  const stocks = await findAllStocksWithTopHolder();
+async function StocksList({
+  stockQuery,
+  holderQuery,
+}: {
+  stockQuery?: string;
+  holderQuery?: string;
+}) {
+  // Use search function if filters are active, otherwise get all stocks
+  const stocks = (stockQuery || holderQuery)
+    ? await searchStocksWithFilters({ stockCode: stockQuery, holderName: holderQuery })
+    : await findAllStocksWithTopHolder();
+
   const latestPeriod = await getLatestPeriod();
 
   if (stocks.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">Belum ada data tersedia</p>
-        <p className="text-gray-400 text-sm mt-2">Data kepemilikan saham akan muncul di sini setelah diimpor</p>
+        <p className="text-gray-500 text-lg">
+          {stockQuery || holderQuery
+            ? 'Tidak ditemukan hasil untuk pencarian ini'
+            : 'Belum ada data tersedia'}
+        </p>
+        <p className="text-gray-400 text-sm mt-2">
+          {stockQuery || holderQuery
+            ? 'Coba kata kunci lain atau hapus filter'
+            : 'Data kepemilikan saham akan muncul di sini setelah diimpor'}
+        </p>
       </div>
     );
   }
@@ -60,7 +79,14 @@ async function StocksList() {
   );
 }
 
-export default function StocksPage() {
+export default function StocksPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; holder?: string; sort?: string; order?: string };
+}) {
+  const stockQuery = searchParams.q || '';
+  const holderQuery = searchParams.holder || '';
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -70,12 +96,20 @@ export default function StocksPage() {
         Kepemilikan saham di atas 1% untuk seluruh emiten Bursa Efek Indonesia
       </p>
 
+      <StocksSearch
+        initialStockQuery={stockQuery}
+        initialHolderQuery={holderQuery}
+      />
+
       <Suspense fallback={
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       }>
-        <StocksList />
+        <StocksList
+          stockQuery={stockQuery}
+          holderQuery={holderQuery}
+        />
       </Suspense>
     </div>
   );
