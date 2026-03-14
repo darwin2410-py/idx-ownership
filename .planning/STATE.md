@@ -2,7 +2,7 @@
 
 **Project:** IDX Ownership Visualizer
 **Last Updated:** 2026-03-14
-**Session:** 1 - Plan 01-03 Complete
+**Session:** 1 - Plans 01-03, 01-04 Complete
 
 ---
 
@@ -22,17 +22,28 @@ Building data pipeline and core visualization features to enable users to search
 ## Current Position
 
 **Phase:** 1 (Data Foundation)
-**Plan:** 03 (Data Validation with Zod) - COMPLETE
-**Status:** Zod validation service with runtime schema validation, ownership percentage checks, and structured logging
-**Progress Bar:** █████░░░░░░ 14% (2/14 plans)
+**Plan:** 04 (Import Workflow & API) - COMPLETE
+**Status:** Complete import workflow with repository pattern, transaction safety, API endpoint, and CLI script
+**Progress Bar:** ██████░░░░░ 21% (3/14 plans)
 
 ### Next Action
-Continue with Plan 01-04 (Import Workflow & API)
+Phase 1 complete - Proceed to Phase 2 (Core Visualization)
 
 ### Context File
 `.planning/phases/01-data-foundation/01-CONTEXT.md` - Phase 1 implementation decisions captured
 
 ### Recent Work
+**Plan 01-04 Complete:** Import Workflow & API
+- Created repository layer with upsert operations and transaction support
+- Built import service orchestrating extraction, validation, and storage
+- Added API endpoint for PDF upload with rate limiting (10/hour per IP)
+- Created CLI script for local testing with dry-run and force-update options
+- PDF backup to backups/ directory with timestamps for audit trail
+- Idempotent operations (re-running same PDF is safe)
+- Transaction rollback on critical validation errors
+- All 4 tasks completed in 124 seconds
+- Commits: 5ae419b, 1908b94, 71d1f55, 85d142c
+
 **Plan 01-03 Complete:** Data Validation with Zod
 - Created validation result types (ValidationError, ValidationWarning, ValidationResult, DataQualityMetrics)
 - Implemented Zod schemas for all ownership fields (stockCode, holderName, shares, percentage, rank)
