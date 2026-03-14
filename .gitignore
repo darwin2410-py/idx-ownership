@@ -36,3 +36,9 @@ next-env.d.ts
 
 # drizzle
 /drizzle
+
+# planning (local development only)
+.planning/
+
+# backups
+/backups/
