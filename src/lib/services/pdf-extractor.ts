@@ -167,6 +167,223 @@ async function tryPrimaryStrategy(
 }
 
 /**
+ * Fallback Strategy 1: Regex-based extraction
+ * Uses regex patterns to find stock codes and associated data
+ * Less strict about table structure
+ */
+async function tryFallbackStrategy1(
+  pdfData: any
+): Promise<ExtractedOwnershipRecord[]> {
+  const records: ExtractedOwnershipRecord[] = [];
+  const text = pdfData.text;
+
+  // Pattern: Look for stock code followed by holder name and numbers
+  // Format: ABCD Holder Name 1234567890 5.23%
+  const lines = text.split('\n');
+  let rank = 0;
+
+  for (const line of lines) {
+    if (!isDataRow(line)) {
+      continue;
+    }
+
+    // Try to match pattern with stock code
+    const stockMatch = line.match(/\b([A-Z]{4})\b/);
+    if (!stockMatch) {
+      continue;
+    }
+
+    const stockCode = stockMatch[1];
+
+    // Look for percentage in the line
+    const percentMatch = line.match(/(\d+[.,]\d+)%/);
+    const percentage = percentMatch ? parsePercentage(percentMatch[1]) : null;
+
+    // Look for share count (large number)
+    // Match sequences of digits with optional separators
+    const shareMatches = line.match(/(\d{1,3}[.,]\d{3}[.,]\d{3}|\d{7,})/g);
+    let shares: number | null = null;
+    if (shareMatches) {
+      for (const match of shareMatches) {
+        const parsed = parseShares(match);
+        if (parsed !== null && parsed > 1000) {
+          shares = parsed;
+          break;
+        }
+      }
+    }
+
+    // Extract holder name (everything between stock code and numbers)
+    const stockIndex = line.indexOf(stockMatch[0]);
+    let holderName = '';
+
+    // Get text after stock code
+    const afterStock = line.substring(stockIndex + 4).trim();
+
+    // Remove numbers and percentage from holder name
+    holderName = afterStock
+      .replace(/(\d+[.,]\d+)%/g, '')
+      .replace(/\d{1,3}[.,]\d{3}[.,]\d{3}/g, '')
+      .replace(/\d{7,}/g, '')
+      .trim();
+
+    if (holderName.length > 2) {
+      rank++;
+      records.push({
+        rank,
+        stockCode,
+        holderName: cleanHolderName(holderName),
+        sharesOwned: shares || 0,
+        ownershipPercentage: percentage || 0,
+      });
+    }
+  }
+
+  return records;
+}
+
+/**
+ * Fallback Strategy 2: Line-by-line scanning
+ * Scans all lines for anything looking like a stock code
+ * Extracts following words as holder name
+ * Useful for malformed table structures
+ */
+async function tryFallbackStrategy2(
+  pdfData: any
+): Promise<ExtractedOwnershipRecord[]> {
+  const records: ExtractedOwnershipRecord[] = [];
+  const text = pdfData.text;
+  const lines = text.split('\n');
+
+  // Group lines by stock code
+  const stockGroups = new Map<string, string[]>();
+  let currentStock: string | null = null;
+
+  for (const line of lines) {
+    if (!isDataRow(line)) {
+      continue;
+    }
+
+    // Check for stock code
+    const stockMatch = line.match(/\b([A-Z]{4})\b/);
+    if (stockMatch) {
+      currentStock = stockMatch[1];
+      if (parseStockCode(currentStock)) {
+        if (!stockGroups.has(currentStock)) {
+          stockGroups.set(currentStock, []);
+        }
+        stockGroups.get(currentStock)!.push(line);
+      }
+    } else if (currentStock && stockGroups.has(currentStock)) {
+      // Continue adding lines to current stock
+      stockGroups.get(currentStock)!.push(line);
+    }
+  }
+
+  // Parse each stock group
+  let rank = 0;
+  for (const [stockCode, lines] of stockGroups.entries()) {
+    const combinedText = lines.join(' ');
+
+    // Extract holder name (longest text segment that's not numbers)
+    const words = combinedText.split(/\s+/).filter(w => w.length > 2);
+    const holderWords: string[] = [];
+
+    for (const word of words) {
+      // Skip if it's a stock code, number, or percentage
+      if (parseStockCode(word)) continue;
+      if (parsePercentage(word) !== null) continue;
+      if (parseShares(word) !== null) continue;
+      if (/^\d+$/.test(word)) continue;
+
+      holderWords.push(word);
+    }
+
+    const holderName = holderWords.join(' ');
+
+    // Extract percentage and shares
+    const percentMatch = combinedText.match(/(\d+[.,]\d+)%/);
+    const percentage = percentMatch ? parsePercentage(percentMatch[1]) : null;
+
+    const shareMatches = combinedText.match(/(\d{1,3}[.,]\d{3}[.,]\d{3}|\d{7,})/g);
+    let shares: number | null = null;
+    if (shareMatches) {
+      for (const match of shareMatches) {
+        const parsed = parseShares(match);
+        if (parsed !== null && parsed > 1000) {
+          shares = parsed;
+          break;
+        }
+      }
+    }
+
+    if (holderName.length > 2) {
+      rank++;
+      records.push({
+        rank,
+        stockCode,
+        holderName: cleanHolderName(holderName),
+        sharesOwned: shares || 0,
+        ownershipPercentage: percentage || 0,
+      });
+    }
+  }
+
+  return records;
+}
+
+/**
+ * Try all strategies and return the best result
+ */
+async function tryAllStrategies(
+  pdfData: any,
+  structure: TableStructure,
+  filePath: string
+): Promise<{ records: ExtractedOwnershipRecord[]; strategy: 'primary' | 'fallback1' | 'fallback2'; warnings: string[] }> {
+  const warnings: string[] = [];
+
+  // Try primary strategy
+  let primaryRecords = await tryPrimaryStrategy(pdfData, structure, filePath);
+  warnings.push(`Primary strategy: ${primaryRecords.length} records`);
+
+  // If primary got good results, use it
+  if (primaryRecords.length >= 10) {
+    return { records: primaryRecords, strategy: 'primary', warnings };
+  }
+
+  // Try fallback 1
+  let fallback1Records = await tryFallbackStrategy1(pdfData);
+  warnings.push(`Fallback 1 (regex): ${fallback1Records.length} records`);
+
+  if (fallback1Records.length > primaryRecords.length) {
+    primaryRecords = fallback1Records;
+  }
+
+  // If still not enough records, try fallback 2
+  if (primaryRecords.length < 10) {
+    const fallback2Records = await tryFallbackStrategy2(pdfData);
+    warnings.push(`Fallback 2 (line scan): ${fallback2Records.length} records`);
+
+    if (fallback2Records.length > primaryRecords.length) {
+      primaryRecords = fallback2Records;
+    }
+  }
+
+  // Determine which strategy produced the final result
+  let strategy: 'primary' | 'fallback1' | 'fallback2' = 'primary';
+  if (primaryRecords.length === fallback1Records.length && fallback1Records.length >= 10) {
+    strategy = 'fallback1';
+  } else {
+    const fallback2Records = await tryFallbackStrategy2(pdfData);
+    if (primaryRecords.length === fallback2Records.length && fallback2Records.length >= 10) {
+      strategy = 'fallback2';
+    }
+  }
+
+  return { records: primaryRecords, strategy, warnings };
+}
+
+/**
  * Main PDF extraction function
  * Orchestrates extraction with fallback strategies
  */
@@ -185,20 +402,18 @@ export async function extractFromPDF(filePath: string): Promise<PDFExtractionRes
     warnings.push(`Detected ${pdfData.numpages} pages`);
     warnings.push(`Table structure: ${structure.delimiter} delimited`);
 
-    // Try primary strategy
-    let records = await tryPrimaryStrategy(pdfData, structure, filePath);
+    // Try all strategies and get best result
+    const { records, strategy, warnings: strategyWarnings } = await tryAllStrategies(
+      pdfData,
+      structure,
+      filePath
+    );
 
-    // Check if primary strategy was successful
-    if (records.length < 10) {
-      warnings.push(`Primary strategy found only ${records.length} records, may need refinement`);
-    }
+    warnings.push(...strategyWarnings);
 
     // Extract period from filename
     const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || 'unknown.pdf';
     const period = detectPeriodFromFileName(fileName);
-
-    // Determine which strategy was used
-    const extractionMethod: 'primary' | 'fallback1' | 'fallback2' = 'primary';
 
     const extractionTime = Date.now() - startTime;
 
@@ -207,14 +422,14 @@ export async function extractFromPDF(filePath: string): Promise<PDFExtractionRes
         period,
         pdfFileName: fileName,
         totalRecords: records.length,
-        extractionMethod,
+        extractionMethod: strategy,
       },
       records,
       warnings,
       metadata: {
         extractionTime,
         totalPages: pdfData.numpages,
-        strategy: extractionMethod,
+        strategy,
       },
     };
   } catch (error) {
