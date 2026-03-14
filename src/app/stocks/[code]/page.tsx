@@ -31,7 +31,15 @@ function DataFreshnessBadge({ period }: { period: { year: number; month: number 
   );
 }
 
-async function StockDetail({ stockCode }: { stockCode: string }) {
+async function StockDetail({
+  stockCode,
+  sortColumn,
+  sortOrder,
+}: {
+  stockCode: string;
+  sortColumn?: string;
+  sortOrder?: 'asc' | 'desc';
+}) {
   const [stock, ownershipData, latestPeriod] = await Promise.all([
     findEmitenByCode(stockCode),
     findOwnershipByStockWithHolders(stockCode),
@@ -40,6 +48,25 @@ async function StockDetail({ stockCode }: { stockCode: string }) {
 
   if (!stock) {
     notFound();
+  }
+
+  // Apply server-side sorting if specified
+  let sortedData = ownershipData;
+  if (sortColumn && sortOrder) {
+    sortedData = [...ownershipData].sort((a, b) => {
+      let aVal: any = a[sortColumn as keyof typeof a];
+      let bVal: any = b[sortColumn as keyof typeof b];
+
+      // Handle percentage conversion
+      if (sortColumn === 'ownershipPercentage') {
+        aVal = parseFloat(aVal);
+        bVal = parseFloat(bVal);
+      }
+
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
   }
 
   if (ownershipData.length === 0) {
@@ -67,7 +94,7 @@ async function StockDetail({ stockCode }: { stockCode: string }) {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Kepemilikan Saham di Atas 1%
         </h2>
-        <HoldersTable data={ownershipData} stockCode={stockCode} />
+        <HoldersTable data={sortedData} stockCode={stockCode} />
       </div>
     </div>
   );
@@ -75,10 +102,16 @@ async function StockDetail({ stockCode }: { stockCode: string }) {
 
 export default function StockDetailPage({
   params,
+  searchParams,
 }: {
   params: { code: string };
+  searchParams: { sort?: string; order?: string };
 }) {
   const stockCode = params.code.toUpperCase();
+  const sortColumn = searchParams.sort;
+  const sortOrder = searchParams.order === 'asc' || searchParams.order === 'desc'
+    ? searchParams.order
+    : undefined;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -87,7 +120,11 @@ export default function StockDetailPage({
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       }>
-        <StockDetail stockCode={stockCode} />
+        <StockDetail
+          stockCode={stockCode}
+          sortColumn={sortColumn}
+          sortOrder={sortOrder}
+        />
       </Suspense>
     </div>
   );
