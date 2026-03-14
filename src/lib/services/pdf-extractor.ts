@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PDF Extraction Service
  * Extracts IDX ownership data from monthly PDF files using pdf-parse

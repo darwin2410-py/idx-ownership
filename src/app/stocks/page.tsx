@@ -86,7 +86,7 @@ function NoResultsState({ query }: { query: string }) {
         Tidak Ditemukan
       </h3>
       <p className="text-gray-600">
-        Tidak ada saham yang cocok dengan pencarian "{query}"
+        Tidak ada saham yang cocok dengan pencarian &quot;{query}&quot;
       </p>
       <p className="text-gray-500 text-sm mt-2">
         Coba cari dengan kata kunci lain

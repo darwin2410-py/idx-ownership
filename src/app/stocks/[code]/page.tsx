@@ -87,7 +87,7 @@ function NotFoundState({ code }: { code: string }) {
         Saham Tidak Ditemukan
       </h3>
       <p className="text-gray-600 mb-4">
-        Kode saham "{code}" tidak ditemukan dalam database.
+        Kode saham &quot;{code}&quot; tidak ditemukan dalam database.
       </p>
       <Link
         href="/stocks"
@@ -208,7 +208,7 @@ export default async function StockDetailPage({
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
           <div className="h-4 bg-gray-200 rounded w-64 mb-8"></div>
-          <HoldersTable data={[]} isLoading={true} />
+          <HoldersTable data={[]} stockCode={stockCode} isLoading={true} />
         </div>
       }>
         <StockDetail

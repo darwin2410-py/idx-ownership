@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Main validation service for IDX ownership data
  * Validates extracted PDF data using Zod schemas

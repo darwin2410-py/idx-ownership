@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   createColumnHelper,
   flexRender,
@@ -93,7 +93,7 @@ function SkeletonRow() {
 
 export function StocksTable({ data, initialSort, isLoading = false }: StocksTableProps) {
   // Initialize sorting from URL params or props
-  const [sorting, setSorting] = useMemo<SortingState>(() => {
+  const [sorting, setSorting] = useState<SortingState>(() => {
     if (typeof window === 'undefined') return [];
 
     const params = new URLSearchParams(window.location.search);
@@ -108,7 +108,7 @@ export function StocksTable({ data, initialSort, isLoading = false }: StocksTabl
     }
 
     return initialSort ? [initialSort] : [];
-  }, [initialSort]);
+  });
 
   // Update URL when sorting changes
   useEffect(() => {
