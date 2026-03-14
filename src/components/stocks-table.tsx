@@ -1,10 +1,13 @@
 'use client';
 
+import { useMemo, useEffect } from 'react';
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
+  SortingState,
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import Link from 'next/link';
 
@@ -43,6 +46,11 @@ const columns = [
       const pct = info.getValue();
       return pct ? `${pct}%` : '-';
     },
+    sortingFn: (rowA, rowB) => {
+      const pctA = parseFloat(rowA.original.topHolderPct || '0');
+      const pctB = parseFloat(rowB.original.topHolderPct || '0');
+      return pctA - pctB;
+    },
   }),
   columnHelper.accessor('updatedAt', {
     header: 'Update Terakhir',
@@ -51,13 +59,53 @@ const columns = [
 
 interface StocksTableProps {
   data: StockData[];
+  initialSort?: { id: string; desc: boolean };
 }
 
-export function StocksTable({ data }: StocksTableProps) {
+export function StocksTable({ data, initialSort }: StocksTableProps) {
+  // Initialize sorting from URL params or props
+  const [sorting, setSorting] = useMemo<SortingState>(() => {
+    if (typeof window === 'undefined') return [];
+
+    const params = new URLSearchParams(window.location.search);
+    const sortId = params.get('sort');
+    const sortOrder = params.get('order');
+
+    if (sortId) {
+      return [{
+        id: sortId,
+        desc: sortOrder === 'desc',
+      }];
+    }
+
+    return initialSort ? [initialSort] : [];
+  }, [initialSort]);
+
+  // Update URL when sorting changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || sorting.length === 0) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const sortId = sorting[0].id;
+    const sortOrder = sorting[0].desc ? 'desc' : 'asc';
+
+    params.set('sort', sortId);
+    params.set('order', sortOrder);
+
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [sorting]);
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    enableSorting: true,
   });
 
   return (
@@ -69,14 +117,29 @@ export function StocksTable({ data }: StocksTableProps) {
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={header.column.getToggleSortingHandler()}
                 >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                  <div className="flex items-center">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                    {{{
+                      asc: (
+                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      ),
+                      desc: (
+                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      ),
+                    }[header.column.getIsSorted() as string] ?? null}
+                  </div>
                 </th>
               ))}
             </tr>
