@@ -126,11 +126,11 @@
 **Plans:** 3 plans in 2 waves
 
 **Wave 1 (Parallel):**
-- [ ] [03-01-PLAN.md](.planning/phases/03-user-experience/03-01-PLAN.md) — Responsive mobile layout for tables and pages
-- [ ] [03-02-PLAN.md](.planning/phases/03-user-experience/03-02-PLAN.md) — Loading states, error handling, and empty states
+- [x] [03-01-PLAN.md](.planning/phases/03-user-experience/03-01-PLAN.md) — Responsive mobile layout for tables and pages
+- [x] [03-02-PLAN.md](.planning/phases/03-user-experience/03-02-PLAN.md) — Loading states, error handling, and empty states
 
 **Wave 2:**
-- [ ] [03-03-PLAN.md](.planning/phases/03-user-experience/03-03-PLAN.md) — Landing page with hero, how it works, and FAQ
+- [x] [03-03-PLAN.md](.planning/phases/03-user-experience/03-03-PLAN.md) — Landing page with hero, how it works, and FAQ
 
 ---
 
@@ -174,13 +174,13 @@ Deferred to post-MVP releases:
 | EMIT-01: Stock Listing Page | Phase 2 | ✅ Complete | 02-01 |
 | EMIT-02: Stock Detail Page | Phase 2 | ✅ Complete | 02-02 |
 | CORE-01: Sortable Tables | Phase 2 | ✅ Complete | 02-03 |
-| CORE-02: Search & Filter | Phase 2 | Pending | 02-04 |
+| CORE-02: Search & Filter | Phase 2 | ✅ Complete | 02-04 |
 | CORE-03: Data Freshness Indicator | Phase 2 | ✅ Complete | 02-01, 02-02 |
 | CORE-04: Export to CSV | Phase 2 | ✅ Complete | 02-02 |
-| ENV-01: Environment Setup | Phase 2.1 | Pending | 02.1-01 |
-| UX-01: Responsive Mobile Layout | Phase 3 | Pending | 03-01 |
-| UX-02: Loading States | Phase 3 | Pending | 03-02 |
-| UX-03: Landing Page | Phase 3 | Pending | 03-03 |
+| ENV-01: Environment Setup | Phase 2.1 | ✅ Complete | 02.1-01 |
+| UX-01: Responsive Mobile Layout | Phase 3 | ✅ Complete | 03-01 |
+| UX-02: Loading States | Phase 3 | ✅ Complete | 03-02 |
+| UX-03: Landing Page | Phase 3 | ✅ Complete | 03-03 |
 | HIST-01: Historical Comparison | Phase 4 | Pending | - |
 | HOLD-01: Per-Holder View | Phase 4 | Pending | - |
 | DASH-01: Top Movers Dashboard | Phase 4 | Pending | - |
