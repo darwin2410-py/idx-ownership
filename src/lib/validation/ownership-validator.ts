@@ -294,3 +294,52 @@ export function isCriticalError(error: ValidationError): boolean {
   // Out-of-range values are warnings, not critical
   return false;
 }
+
+/**
+ * Log validation result in structured format
+ * Provides clear visibility into validation outcome
+ */
+export function logValidationResult(
+  result: ValidationResult,
+  context: string,
+): void {
+  // Log summary header
+  console.log(`\n=== Validation Result: ${context} ===`);
+
+  // Log summary statistics
+  console.log(`Summary:`);
+  console.log(`  Total records: ${result.summary.totalRecords}`);
+  console.log(`  Valid records: ${result.summary.validRecords}`);
+  console.log(`  Errors: ${result.summary.errorCount}`);
+  console.log(`  Warnings: ${result.summary.warningCount}`);
+  console.log(`  Status: ${result.valid ? '✓ VALID' : '✗ INVALID'}`);
+
+  // Log errors if any
+  if (result.errors.length > 0) {
+    console.error(`\nErrors (${result.errors.length}):`);
+    result.errors.forEach((error, index) => {
+      const severity = error.severity === 'critical' ? 'CRITICAL' : 'ERROR';
+      console.error(
+        `  ${index + 1}. [${severity}] ${error.field}: ${error.message}`,
+      );
+      if (error.value !== undefined && error.value !== null) {
+        console.error(`     Value: ${JSON.stringify(error.value)}`);
+      }
+    });
+  }
+
+  // Log warnings if any
+  if (result.warnings.length > 0) {
+    console.warn(`\nWarnings (${result.warnings.length}):`);
+    result.warnings.forEach((warning, index) => {
+      console.warn(
+        `  ${index + 1}. [WARN] ${warning.field}: ${warning.message}`,
+      );
+      if (warning.value !== undefined && warning.value !== null) {
+        console.warn(`     Value: ${JSON.stringify(warning.value)}`);
+      }
+    });
+  }
+
+  console.log('=== End Validation Result ===\n');
+}
