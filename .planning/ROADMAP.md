@@ -11,7 +11,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 1/4 | In progress | 01-02 |
+| 1. Data Foundation | 1/4 | In progress | 01-01 |
 | 2. Core Visualization | 0/4 | Not started | - |
 | 3. User Experience | 0/3 | Not started | - |
 | 4. Enhancement Features | 0/3 | Not started | - |
@@ -48,8 +48,8 @@
 **Plans:** 4 plans in 2 waves
 
 **Wave 1 (Parallel):**
-- [ ] [01-01-PLAN.md](.planning/phases/01-data-foundation/01-01-PLAN.md) — Database schema setup with Drizzle ORM (4 tables, composite keys, indexes)
-- [x] [01-02-PLAN.md](.planning/phases/01-data-foundation/01-02-PLAN.md) — PDF extraction pipeline with pdf-parse and fallback strategies ✅
+- [x] [01-01-PLAN.md](.planning/phases/01-data-foundation/01-01-PLAN.md) — Database schema setup with Drizzle ORM (4 tables, composite keys, indexes) ✅
+- [ ] [01-02-PLAN.md](.planning/phases/01-data-foundation/01-02-PLAN.md) — PDF extraction pipeline with pdf-parse and fallback strategies
 
 **Wave 2 (Parallel):**
 - [ ] [01-03-PLAN.md](.planning/phases/01-data-foundation/01-03-PLAN.md) — Data validation with Zod schemas
@@ -131,7 +131,7 @@ Deferred to post-MVP releases:
 | Requirement | Phase | Status | Plans |
 |-------------|-------|--------|-------|
 | DATA-01: PDF Extraction Pipeline | Phase 1 | Pending | 01-02, 01-04 |
-| DATA-02: Database Schema Design | Phase 1 | Pending | 01-01 |
+| DATA-02: Database Schema Design | Phase 1 | ✅ Complete | 01-01 |
 | DATA-03: Data Quality Validation | Phase 1 | Pending | 01-03, 01-04 |
 | EMIT-01: Stock Listing Page | Phase 2 | Pending | - |
 | EMIT-02: Stock Detail Page | Phase 2 | Pending | - |

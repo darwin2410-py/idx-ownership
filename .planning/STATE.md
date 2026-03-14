@@ -2,7 +2,7 @@
 
 **Project:** IDX Ownership Visualizer
 **Last Updated:** 2026-03-14
-**Session:** 2 - Plan 01-02 Complete
+**Session:** 1 - Plan 01-01 Complete
 
 ---
 
@@ -22,23 +22,25 @@ Building data pipeline and core visualization features to enable users to search
 ## Current Position
 
 **Phase:** 1 (Data Foundation)
-**Plan:** 02 (PDF Extraction Pipeline) - COMPLETE
-**Status:** PDF extraction service implemented with 3-tier fallback strategy
-**Progress Bar:** ██░░░░░░░░░ 7% (1/14 plans)
+**Plan:** 01 (Database Schema with Drizzle ORM) - COMPLETE
+**Status:** PostgreSQL schema created with Drizzle ORM and Neon database
+**Progress Bar:** ███░░░░░░░░ 7% (1/14 plans)
 
 ### Next Action
-Continue with Plan 01-03 (Data Validation) or Plan 01-01 (Database Schema)
+Continue with Plan 01-02 (PDF Extraction Pipeline)
 
 ### Context File
 `.planning/phases/01-data-foundation/01-CONTEXT.md` - Phase 1 implementation decisions captured
 
 ### Recent Work
-**Plan 01-02 Complete:** PDF Extraction Pipeline
-- Implemented pdf-parse integration with multi-strategy fallback
-- Created TypeScript types for extraction results
-- Built parsing utilities for Indonesian number formats
-- All 4 tasks completed in 151 seconds
-- Commits: 9ad4aa5, ed21ee2, 21efce6, 30e1d2f
+**Plan 01-01 Complete:** Database Schema with Drizzle ORM
+- Created Next.js 15 project with TypeScript 5.7
+- Implemented Drizzle ORM schema with 4 tables
+- Configured Neon database connection (replaced deprecated @vercel/postgres)
+- Generated SQL migration with indexes and foreign keys
+- Created migration runner script with error handling
+- All 4 tasks completed in 251 seconds
+- Commits: 76d087a, f8c1807, 2a77026
 
 ---
 
@@ -65,12 +67,12 @@ Continue with Plan 01-03 (Data Validation) or Plan 01-01 (Database Schema)
 
 1. **Next.js Framework** (Decision ID: KD-001)
    - Rationale: Rekomendasi user + great for Vercel deployment, SEO-friendly untuk public site
-   - Outcome: Pending implementation
+   - Outcome: ✅ Implemented (Next.js 15 + React 19 + TypeScript 5.7)
    - Date: 2025-03-14
 
 2. **Full History Storage** (Decision ID: KD-002)
    - Rationale: Enable historical comparison dan trend analysis
-   - Outcome: Pending implementation
+   - Outcome: ✅ Implemented (schema supports append-only historical records)
    - Date: 2025-03-14
 
 3. **Public Access** (Decision ID: KD-003)
@@ -78,14 +80,19 @@ Continue with Plan 01-03 (Data Validation) or Plan 01-01 (Database Schema)
    - Outcome: Pending implementation
    - Date: 2025-03-14
 
+4. **Neon Database** (Decision ID: KD-004)
+   - Rationale: @vercel/postgres deprecated, Neon is recommended replacement
+   - Outcome: ✅ Implemented (@neondatabase/serverless + drizzle-orm/neon-http)
+   - Date: 2026-03-14
+
 ### Stack Choices
-- **Frontend:** Next.js 15 + React 19 + TypeScript 5.x
-- **Styling:** shadcn/ui + Tailwind CSS
-- **Database:** Vercel Postgres + Drizzle ORM
-- **PDF Processing:** pdf-parse + Zod validation
-- **Charts/Tables:** Recharts + TanStack Table 8.x
-- **State:** @tanstack/react-query + Zustand
-- **Deployment:** Vercel
+- **Frontend:** Next.js 15 + React 19 + TypeScript 5.x ✅
+- **Styling:** Tailwind CSS ✅
+- **Database:** Neon + Drizzle ORM ✅
+- **PDF Processing:** pdf-parse + Zod validation (installed)
+- **Charts/Tables:** Recharts + TanStack Table 8.x (pending)
+- **State:** @tanstack/react-query + Zustand (pending)
+- **Deployment:** Vercel (pending)
 
 ### Architecture Approach
 Server-first Next.js with:
@@ -219,4 +226,4 @@ None yet (project initialization).
 ---
 
 *Last updated: 2026-03-14*
-*Session: 1 - Initialization complete*
+*Session: 1 - Plan 01-01 Complete*
