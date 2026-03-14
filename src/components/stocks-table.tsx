@@ -66,9 +66,32 @@ const columns = [
 interface StocksTableProps {
   data: StockData[];
   initialSort?: { id: string; desc: boolean };
+  isLoading?: boolean;
 }
 
-export function StocksTable({ data, initialSort }: StocksTableProps) {
+function SkeletonRow() {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-16"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-32"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-24"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-12"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+      </td>
+    </tr>
+  );
+}
+
+export function StocksTable({ data, initialSort, isLoading = false }: StocksTableProps) {
   // Initialize sorting from URL params or props
   const [sorting, setSorting] = useMemo<SortingState>(() => {
     if (typeof window === 'undefined') return [];
@@ -113,6 +136,42 @@ export function StocksTable({ data, initialSort }: StocksTableProps) {
     onSortingChange: setSorting,
     enableSorting: true,
   });
+
+  if (isLoading) {
+    return (
+      <div className="max-w-full overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead className="bg-gray-50">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  >
+                    <div className="flex items-center">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )
+                      }
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-full overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
