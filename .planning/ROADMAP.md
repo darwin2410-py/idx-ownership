@@ -13,6 +13,7 @@
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 4/4 | Complete | 01-01, 01-02, 01-03, 01-04 |
 | 2. Core Visualization | 3/4 | In progress | 02-01, 02-02, 02-03 |
+| 2.1. Solve Error | 0/0 | Not started | - |
 | 3. User Experience | 0/3 | Not started | - |
 | 4. Enhancement Features | 0/3 | Not started | - |
 
@@ -24,6 +25,7 @@
 
 - [x] **Phase 1: Data Foundation** - PDF extraction pipeline and database schema for ownership data storage ✅
 - [ ] **Phase 2: Core Visualization** - Per-Emiten view with searchable, sortable stock list and detail pages
+- [ ] **Phase 2.1: Solve Error** - Database connection setup and environment configuration
 - [ ] **Phase 3: User Experience** - Responsive mobile layout, loading states, and landing page
 - [ ] **Phase 4: Enhancement Features** - Historical comparison, per-holder view, and top movers dashboard
 
@@ -82,6 +84,24 @@
 **Wave 2 (Parallel):**
 - [x] [02-03-PLAN.md](.planning/phases/02-core-visualization/02-03-PLAN.md) — Sortable tables with URL state encoding ✅
 - [ ] [02-04-PLAN.md](.planning/phases/02-core-visualization/02-04-PLAN.md) — Search and filter with debounced input
+
+---
+
+### Phase 2.1: Solve Error
+
+**Goal:** Fix database connection error and configure environment variables for local development and deployment
+
+**Depends on:** Phase 1 (Data Foundation), Phase 2 (Core Visualization)
+
+**Requirements:** ENV-01 (Environment Setup)
+
+**Success Criteria** (what must be TRUE):
+1. Database connection works locally with environment variable configured
+2. Application runs without DATABASE_URL error
+3. .env.example file documents required environment variables
+4. Database schema migrations run successfully
+
+**Plans:** TBD
 
 ---
 
@@ -165,6 +185,8 @@ Phase 1: Data Foundation (foundation)
     ↓
 Phase 2: Core Visualization (requires data)
     ↓
+Phase 2.1: Solve Error (fixes runtime issues)
+    ↓
 Phase 3: User Experience (requires core features)
     ↓
 Phase 4: Enhancement Features (requires core + historical data)
@@ -207,4 +229,4 @@ Explicitly excluded from v1:
 ---
 
 *Last updated: 2026-03-14*
-*Next action: `/gsd:execute-phase 02-core-visualization`*
+*Next action: `/gsd:plan-phase 2.1`*
