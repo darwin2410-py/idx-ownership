@@ -16,6 +16,14 @@ type HolderData = {
   holderType: string;
   sharesOwned: number;
   ownershipPercentage: string;
+  comparison?: ComparisonData;
+};
+
+type ComparisonData = {
+  previousRank: number | null;
+  previousPercentage: string | null;
+  changePercentage: number;
+  status: 'new' | 'exited' | 'increased' | 'decreased' | 'unchanged';
 };
 
 const columnHelper = createColumnHelper<HolderData>();
@@ -76,11 +84,12 @@ interface HoldersTableProps {
   data: HolderData[];
   stockCode: string;
   isLoading?: boolean;
+  showComparison?: boolean;
 }
 
-function SkeletonRow() {
-  return (
-    <tr className="animate-pulse">
+function SkeletonRow({ showComparison = false }: { showComparison?: boolean }) {
+  const baseCells = (
+    <>
       <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
         <div className="h-4 bg-gray-200 rounded w-8"></div>
       </td>
@@ -96,11 +105,70 @@ function SkeletonRow() {
       <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
         <div className="h-4 bg-gray-200 rounded w-20"></div>
       </td>
+    </>
+  );
+
+  const comparisonCells = showComparison ? (
+    <>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-16"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-16"></div>
+      </td>
+      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+        <div className="h-4 bg-gray-200 rounded w-12"></div>
+      </td>
+    </>
+  ) : null;
+
+  return (
+    <tr className="animate-pulse">
+      {baseCells}
+      {comparisonCells}
     </tr>
   );
 }
 
-export function HoldersTable({ data, stockCode, isLoading = false }: HoldersTableProps) {
+function StatusBadge({ status }: { status: ComparisonData['status'] }) {
+  const badges = {
+    new: { label: 'BARU', className: 'bg-blue-100 text-blue-800' },
+    exited: { label: 'KELUAR', className: 'bg-gray-100 text-gray-800' },
+    increased: { label: '↑', className: 'text-green-600' },
+    decreased: { label: '↓', className: 'text-red-600' },
+    unchanged: { label: '→', className: 'text-gray-400' },
+  };
+
+  const badge = badges[status];
+
+  if (status === 'new' || status === 'exited') {
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${badge.className}`}>
+        {badge.label}
+      </span>
+    );
+  }
+
+  return <span className={`text-lg font-bold ${badge.className}`}>{badge.label}</span>;
+}
+
+function ChangeDisplay({ change, status }: { change: number; status: ComparisonData['status'] }) {
+  if (status === 'new') return <span className="text-blue-600">+{change.toFixed(2)}%</span>;
+  if (status === 'exited') return <span className="text-gray-500">-</span>;
+
+  const isPositive = change > 0;
+  const colorClass = isPositive ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-400';
+  const sign = isPositive ? '+' : '';
+
+  return (
+    <span className={`font-medium ${colorClass}`}>
+      {sign}{change.toFixed(2)}%
+    </span>
+  );
+}
+
+
+export function HoldersTable({ data, stockCode, isLoading = false, showComparison = false }: HoldersTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -119,9 +187,97 @@ export function HoldersTable({ data, stockCode, isLoading = false }: HoldersTabl
     return []; // Default: no sorting (use rank order from server)
   });
 
+  // Dynamic columns based on comparison mode
+  const dynamicColumns = useMemo(() => {
+    const baseColumns = [
+      columnHelper.accessor('rank', {
+        header: 'Peringkat',
+        cell: (info) => `#${info.getValue()}`,
+        enableSorting: true,
+      }),
+      columnHelper.accessor('holderName', {
+        header: () => (
+          <div className="left-0 sticky z-10 bg-white min-w-[200px]">
+            Nama Pemegang
+          </div>
+        ),
+        cell: (info) => (
+          <div className="left-0 sticky z-10 bg-white min-w-[200px]">
+            {info.getValue()}
+          </div>
+        ),
+        enableSorting: true,
+      }),
+      columnHelper.accessor('holderType', {
+        header: 'Tipe',
+        cell: (info) => {
+          const type = info.getValue();
+          const typeMap: Record<string, string> = {
+            individual: 'Individu',
+            institution: 'Institusi',
+            foreign: 'Asing',
+            government: 'Pemerintah',
+            other: 'Lainnya',
+          };
+          return typeMap[type] || type;
+        },
+        enableSorting: true,
+      }),
+      columnHelper.accessor('sharesOwned', {
+        header: 'Jumlah Saham',
+        cell: (info) => {
+          const num = info.getValue();
+          return new Intl.NumberFormat('id-ID').format(num);
+        },
+        enableSorting: true,
+      }),
+      columnHelper.accessor('ownershipPercentage', {
+        header: '% Pemilikan',
+        cell: (info) => `${info.getValue()}%`,
+        enableSorting: true,
+        meta: {
+          className: 'text-right min-w-[80px]',
+        },
+      }),
+    ];
+
+    // Add comparison columns if enabled
+    if (showComparison) {
+      baseColumns.push(
+        columnHelper.accessor('comparison', {
+          header: () => <div className="text-center">Bulan Lalu</div>,
+          cell: (info) => {
+            const comp = info.getValue();
+            if (!comp) return <span className="text-gray-400">-</span>;
+            if (comp.previousPercentage === null) return <span className="text-gray-400">-</span>;
+            return <span className="font-medium">{comp.previousPercentage}%</span>;
+          },
+        }),
+        columnHelper.accessor('comparison', {
+          header: () => <div className="text-center">Perubahan</div>,
+          cell: (info) => {
+            const comp = info.getValue();
+            if (!comp) return <span className="text-gray-400">-</span>;
+            return <ChangeDisplay change={comp.changePercentage} status={comp.status} />;
+          },
+        }),
+        columnHelper.accessor('comparison', {
+          header: () => <div className="text-center">Status</div>,
+          cell: (info) => {
+            const comp = info.getValue();
+            if (!comp) return <span className="text-gray-400">-</span>;
+            return <div className="flex justify-center"><StatusBadge status={comp.status} /></div>;
+          },
+        })
+      );
+    }
+
+    return baseColumns;
+  }, [showComparison]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: dynamicColumns,
     getCoreRowModel: getCoreRowModel(),
     state: {
       sorting,
@@ -209,7 +365,7 @@ export function HoldersTable({ data, stockCode, isLoading = false }: HoldersTabl
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {Array.from({ length: 10 }).map((_, i) => (
-                <SkeletonRow key={i} />
+                <SkeletonRow key={i} showComparison={showComparison} />
               ))}
             </tbody>
           </table>
@@ -270,18 +426,29 @@ export function HoldersTable({ data, stockCode, isLoading = false }: HoldersTabl
             ))}
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {table.getRowModel().rows.map((row) => {
+              const comp = row.original.comparison;
+              const rowClassName = comp
+                ? comp.status === 'new'
+                  ? 'bg-blue-50'
+                  : comp.status === 'exited'
+                  ? 'bg-gray-50'
+                  : 'hover:bg-gray-50'
+                : 'hover:bg-gray-50';
+
+              return (
+                <tr key={row.id} className={rowClassName}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900"
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
