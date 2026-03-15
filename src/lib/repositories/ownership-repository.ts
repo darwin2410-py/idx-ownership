@@ -1142,6 +1142,92 @@ export async function getTopDisposals(
 }
 
 /**
+ * HolderRowWithEntity — extends the basic holder row with entity context
+ * entityId/entityName are null when the holder belongs to no entity
+ */
+export type HolderRowWithEntity = {
+  rank: number;
+  holderId: number;
+  holderName: string;
+  holderType: string;
+  sharesOwned: number;
+  ownershipPercentage: string;
+  periodId: string;
+  entityId: number | null;
+  entityName: string | null;
+};
+
+/**
+ * Find all ownership records for a stock with entity context
+ * Extends findOwnershipByStockWithHolders with LEFT JOINs to entity_holders and entities
+ * Returns holderId, entityId, entityName per row (null when no entity assigned)
+ */
+export async function findOwnershipByStockWithEntityContext(
+  emitenId: string,
+  periodId?: string
+): Promise<HolderRowWithEntity[]> {
+  // If no period specified, use latest period
+  let targetPeriod = periodId;
+  if (!targetPeriod) {
+    const latestPeriod = await db
+      .select()
+      .from(schema.periods)
+      .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+      .limit(1);
+    if (latestPeriod.length === 0) {
+      return [];
+    }
+    targetPeriod = latestPeriod[0].id;
+  }
+
+  // Query ownership records with holder details and entity context via LEFT JOINs
+  const result = await db
+    .select({
+      rank: schema.ownershipRecords.rank,
+      holderId: schema.holders.id,
+      holderName: schema.holders.canonicalName,
+      holderType: schema.holders.type,
+      sharesOwned: schema.ownershipRecords.sharesOwned,
+      ownershipPercentage: schema.ownershipRecords.ownershipPercentage,
+      periodId: schema.ownershipRecords.periodId,
+      entityId: schema.entityHolders.entityId,
+      entityName: schema.entities.name,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(
+      schema.holders,
+      eq(schema.holders.id, schema.ownershipRecords.holderId)
+    )
+    .leftJoin(
+      schema.entityHolders,
+      eq(schema.entityHolders.holderId, schema.holders.id)
+    )
+    .leftJoin(
+      schema.entities,
+      eq(schema.entities.id, schema.entityHolders.entityId)
+    )
+    .where(
+      and(
+        eq(schema.ownershipRecords.emitenId, emitenId),
+        eq(schema.ownershipRecords.periodId, targetPeriod)
+      )
+    )
+    .orderBy(schema.ownershipRecords.rank);
+
+  return result.map((row) => ({
+    rank: row.rank,
+    holderId: row.holderId,
+    holderName: row.holderName,
+    holderType: row.holderType,
+    sharesOwned: row.sharesOwned,
+    ownershipPercentage: row.ownershipPercentage.toString(),
+    periodId: row.periodId,
+    entityId: row.entityId ?? null,
+    entityName: row.entityName ?? null,
+  }));
+}
+
+/**
  * Get most active stocks for a period
  * Returns stocks with most ownership changes compared to previous period
  */
