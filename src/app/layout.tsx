@@ -41,6 +41,12 @@ export default function RootLayout({
                   Beranda
                 </Link>
                 <Link
+                  href="/entities"
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Entitas
+                </Link>
+                <Link
                   href="/stocks"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors min-h-10"
                 >
