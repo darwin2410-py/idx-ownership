@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-03-15T12:37:00.697Z"
+last_updated: "2026-03-15T12:42:11.134Z"
 progress:
   total_phases: 8
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 20
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # STATE - IDX Ownership Visualizer
@@ -35,19 +35,29 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 ## Current Position
 
 **Milestone:** v1.1 (Lineage & Entity Linking)
-**Phase:** 6 (Entity Data Model & Management) - IN PROGRESS
-**Plan:** 06-02 complete
-**Status:** Phase 6 Plan 02 complete — entity-repository.ts (8 functions) + 4 API routes for entity CRUD, alias management, and pg_trgm fuzzy holder search
+**Phase:** 6 (Entity Data Model & Management) - COMPLETE
+**Plan:** 06-03 complete
+**Status:** Phase 6 complete — entity UI: /entities list page, /entities/[id] detail page, EntityCreateForm, EntityAliasesTable, AliasSearchCombobox (cmdk), nav link
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
-**Progress Bar (v1.1):** ████░░░░░░ 57% (4/7 plans)
+**Progress Bar (v1.1):** ██████░░░░ 86% (6/7 plans)
 
 ### Next Action
-Execute Phase 6 Plan 03: Entity Management UI (entity creation form, holder linking combobox with cmdk + pg_trgm fuzzy search).
+Execute Phase 7: Aggregate Views (entity aggregate ownership totals and per-entity portfolio view).
 
 ### Context File
-`.planning/phases/06-entity-data-model-and-management/06-02-SUMMARY.md` - Most recent plan summary
+`.planning/phases/06-entity-data-model-and-management/06-03-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
+**Session 12:** Phase 6 Plan 03 Complete (Phase 6 COMPLETE)
+- Created /entities server page with entity table (name, alias count, Lihat link) and empty state
+- Created EntityCreateForm client component: POST /api/entities, 409 shows inline error, 201 clears + router.refresh()
+- Created /entities/[id] server page: findEntityById (notFound if null), findAliasesByEntityId
+- Created EntityAliasesTable client component: per-row Hapus button calls DELETE /api/entities/[id]/aliases/[holderId] + router.refresh()
+- Created AliasSearchCombobox using cmdk Command.Dialog: 300ms debounce, min 2 chars, pg_trgm results, 409 conflict shown inline
+- Added "Entitas" nav link to layout.tsx (between Beranda and Daftar Saham)
+- npm run build exits 0; /entities and /entities/[id] visible in build output
+- Commits: 1f502a7 (Task 1: list page + create form), c1d4057 (Task 2: detail + combobox + nav)
+
 **Session 11:** Phase 6 Plan 02 Complete
 - Created entity-repository.ts with 8 exported functions: createEntity, findAllEntities, findEntityById, findEntityByHolderId, findAliasesByEntityId, addAlias, removeAlias, searchHoldersByTrigram
 - pg_trgm fuzzy search uses db.execute() raw SQL with % operator; SET similarity_threshold = 0.2 before query
