@@ -118,8 +118,10 @@ async function tryIDXConcatenatedStrategy(
       }
     }
 
-    // Clean holder name: remove trailing numbers/codes
-    holderName = holderName.replace(/[\d.,]+$/, '').replace(/[A-Z]{3}$/, '').trim();
+    // Clean holder name: remove trailing numbers only.
+    // Do NOT strip trailing [A-Z]{3} — the type code boundary logic already excluded the type code,
+    // and stripping 3 trailing uppercase chars would corrupt names ending in e.g. "STU" (PANGESTU).
+    holderName = holderName.replace(/[\d.,]+$/, '').trim();
     holderName = cleanHolderName(holderName);
 
     if (holderName.length >= 3 && percentage !== null) {
