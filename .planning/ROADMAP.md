@@ -17,7 +17,7 @@
 | 3. User Experience | 3/3 | Complete | 03-01, 03-02, 03-03 |
 | 4. Enhancement Features | 3/3 | Complete | 04-01, 04-02, 04-03 |
 | 5. PDF Fix & Data Quality | 2/2 | Complete   | 2026-03-15 |
-| 6. Entity Data Model & Management | 0/0 | Not started | - |
+| 6. Entity Data Model & Management | 0/3 | Not started | - |
 | 7. Aggregate Views | 0/0 | Not started | - |
 
 **v1.0 Progress:** 15/15 plans complete (100%)
@@ -32,7 +32,7 @@
 - [x] **Phase 2.1: Solve Error** - Database connection setup and environment configuration ✅
 - [x] **Phase 3: User Experience** - Responsive mobile layout, loading states, and landing page ✅
 - [x] **Phase 4: Enhancement Features** - Historical comparison, per-holder view, and top movers dashboard ✅
-- [x] **Phase 5: PDF Fix & Data Quality** - Fix holder name truncation in PDF extractor and re-import clean data (completed 2026-03-15)
+- [x] **Phase 5: PDF Fix & Data Quality** - Fix holder name truncation in PDF extractor and re-import clean data (completed 2026-03-15)
 - [ ] **Phase 6: Entity Data Model & Management** - Schema, API, and admin UI for creating and managing entity groups
 - [ ] **Phase 7: Aggregate Views** - Entity profile page and aggregate ownership display on stock detail pages
 
@@ -207,7 +207,16 @@
 4. User can remove a holder alias from an entity, and that holder immediately reappears as an independent entry in all views
 5. All existing ownership records and holder data remain intact after any alias add or remove operation
 
-**Plans:** TBD
+**Plans:** 3 plans in 3 waves
+
+**Wave 1:**
+- [ ] [06-01-PLAN.md](.planning/phases/06-entity-data-model-and-management/06-01-PLAN.md) — Schema (entities + entity_holders tables), cmdk install, pg_trgm extension + GIN index
+
+**Wave 2:**
+- [ ] [06-02-PLAN.md](.planning/phases/06-entity-data-model-and-management/06-02-PLAN.md) — Entity repository (8 DB functions) + 4 API routes (entity CRUD, alias add/remove, holder fuzzy search)
+
+**Wave 3:**
+- [ ] [06-03-PLAN.md](.planning/phases/06-entity-data-model-and-management/06-03-PLAN.md) — Entity list page (/entities), entity detail page (/entities/[id]), cmdk combobox, nav link
 
 ---
 
@@ -264,9 +273,9 @@ Deferred to post-v1.1 releases:
 | DASH-01: Top Movers Dashboard | Phase 4 | Complete | 04-03 |
 | PARSE-01: Fix Holder Name Truncation | Phase 5 | Pending | TBD |
 | PARSE-02: Re-import Data dengan Extractor Baru | Phase 5 | Pending | TBD |
-| ENTITY-01: User Dapat Membuat Entity Group | Phase 6 | Pending | TBD |
-| ENTITY-02: User Dapat Tambah Holder Alias ke Entity | Phase 6 | Pending | TBD |
-| ENTITY-03: User Dapat Hapus Alias dari Entity | Phase 6 | Pending | TBD |
+| ENTITY-01: User Dapat Membuat Entity Group | Phase 6 | Pending | 06-01, 06-02, 06-03 |
+| ENTITY-02: User Dapat Tambah Holder Alias ke Entity | Phase 6 | Pending | 06-01, 06-02, 06-03 |
+| ENTITY-03: User Dapat Hapus Alias dari Entity | Phase 6 | Pending | 06-02, 06-03 |
 | AGGR-01: Entity Profile Page | Phase 7 | Pending | TBD |
 | AGGR-02: Stock Detail Page Tampilkan Entity Aggregate | Phase 7 | Pending | TBD |
 
@@ -343,4 +352,4 @@ Explicitly excluded from v1 and v1.1:
 ---
 
 *Last updated: 2026-03-15*
-*v1.0 complete. v1.1 phases 5-7 added.*
+*v1.0 complete. v1.1 phases 5-7 added. Phase 6 planned: 3 plans in 3 waves.*
