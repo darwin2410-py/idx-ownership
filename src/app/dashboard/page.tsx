@@ -11,13 +11,14 @@ import {
 import { Spinner } from '@/components/stock-states';
 
 interface Props {
-  searchParams: { period?: string };
+  searchParams: Promise<{ period?: string }>;
 }
 
 // Cache for 1 hour (3600 seconds) - IDX data updates monthly
 export const revalidate = 3600;
 
 export default async function DashboardPage({ searchParams }: Props) {
+  const params = await searchParams;
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -30,7 +31,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       </div>
 
       <Suspense fallback={<Spinner />}>
-        <DashboardContent selectedPeriod={searchParams.period} />
+        <DashboardContent selectedPeriod={params.period} />
       </Suspense>
     </div>
   );
