@@ -320,9 +320,9 @@ Mapping requirements to roadmap phases:
 | DASH-01 | Phase 4 | Complete |
 | PARSE-01 | Phase 5 | Complete |
 | PARSE-02 | Phase 5 | Complete |
-| ENTITY-01 | Phase 6 | Pending |
-| ENTITY-02 | Phase 6 | Pending |
-| ENTITY-03 | Phase 6 | Pending |
+| ENTITY-01 | Phase 6 | Complete |
+| ENTITY-02 | Phase 6 | Complete |
+| ENTITY-03 | Phase 6 | Complete |
 | AGGR-01 | Phase 7 | Pending |
 | AGGR-02 | Phase 7 | Pending |
 

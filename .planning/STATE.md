@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-03-15T09:05:41.510Z"
+last_updated: "2026-03-15T12:31:50.358Z"
 progress:
   total_phases: 8
   completed_phases: 6
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 20
+  completed_plans: 18
 ---
 
 # STATE - IDX Ownership Visualizer
@@ -35,19 +35,28 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 ## Current Position
 
 **Milestone:** v1.1 (Lineage & Entity Linking)
-**Phase:** 5 (PDF Fix & Data Quality) - COMPLETE
-**Plan:** 05-01 complete, 05-02 complete
-**Status:** Phase 5 complete — PDF extractor fully fixed, database re-imported with clean names
+**Phase:** 6 (Entity Data Model & Management) - IN PROGRESS
+**Plan:** 06-01 complete
+**Status:** Phase 6 Plan 01 complete — entities + entity_holders tables live in Neon, pg_trgm enabled, cmdk installed
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
-**Progress Bar (v1.1):** ██░░░░░░░░ 29% (2/7 plans)
+**Progress Bar (v1.1):** ███░░░░░░░ 43% (3/7 plans)
 
 ### Next Action
-Execute Phase 6: Entity Data Model & Management (entity grouping schema and UI).
+Execute Phase 6 Plan 02: Entity Management UI (entity creation, holder linking combobox with cmdk + pg_trgm fuzzy search).
 
 ### Context File
-`.planning/phases/05-pdf-fix-and-data-quality/05-01-SUMMARY.md` - Most recent plan summary
+`.planning/phases/06-entity-data-model-and-management/06-01-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
+**Session 10:** Phase 6 Plan 01 Complete
+- Installed cmdk@1.1.1 for entity grouping Command combobox UI
+- Added entities table (id, name UNIQUE, description, created_at) to Drizzle schema
+- Added entity_holders join table with UNIQUE(holder_id) — prevents holder double-counting at DB level
+- Created tables in Neon via direct SQL (drizzle-kit push blocked by interactive TTY on existing ownership_records constraint)
+- Enabled pg_trgm extension; created GIN index holders_canonical_name_trgm_idx; similarity('test','test') = 1 confirmed
+- Build passes: npm run build exits 0, npx tsc --noEmit clean
+- Commits: be7d141 (schema), 972432c (Neon DDL + pg_trgm)
+
 **Session 9:** Phase 5 Plan 02 Complete
 - Discovered second extractor bug: replace(/[A-Z]{3}$/, '') at line 122 of pdf-extractor.ts was stripping last 3 chars of holder names ending in uppercase (e.g. "PRAJOGO PANGESTU" -> "PRAJOGO PANGE")
 - Removed the trailing 3-char strip — Tbk boundary logic already excludes type code, making the strip redundant and destructive
@@ -230,6 +239,11 @@ Execute Phase 6: Entity Data Model & Management (entity grouping schema and UI).
 21. **No Post-Boundary Trailing Strip in PDF Extractor** (Decision ID: KD-021)
     - Rationale: After Tbk boundary + first type code match, the holder name is already clean. Stripping trailing [A-Z]{3} is destructive to names ending in 3 uppercase chars (e.g. PANGESTU, SALIM, BAKRIE)
     - Outcome: Implemented (removed replace(/[A-Z]{3}$/, '') from pdf-extractor.ts line 122, Phase 5 Plan 02)
+    - Date: 2026-03-15
+
+22. **Direct SQL DDL for New Tables (not drizzle-kit push)** (Decision ID: KD-022)
+    - Rationale: drizzle-kit push triggered interactive TTY prompt about renaming unique_period_emiten_holder constraint on existing 7253-row table; --force flag did not bypass it; direct SQL with IF NOT EXISTS is idempotent, non-interactive, and safe
+    - Outcome: Implemented (scripts/create-entity-tables.ts, Phase 6, Plan 01)
     - Date: 2026-03-15
 
 ### Stack Choices
