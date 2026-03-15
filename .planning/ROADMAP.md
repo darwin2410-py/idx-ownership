@@ -16,7 +16,7 @@
 | 2.1. Solve Error | 1/1 | Complete | 02.1-01 |
 | 3. User Experience | 3/3 | Complete | 03-01, 03-02, 03-03 |
 | 4. Enhancement Features | 3/3 | Complete | 04-01, 04-02, 04-03 |
-| 5. PDF Fix & Data Quality | 1/2 | In Progress|  |
+| 5. PDF Fix & Data Quality | 2/2 | Complete   | 2026-03-15 |
 | 6. Entity Data Model & Management | 0/0 | Not started | - |
 | 7. Aggregate Views | 0/0 | Not started | - |
 
@@ -32,7 +32,7 @@
 - [x] **Phase 2.1: Solve Error** - Database connection setup and environment configuration ✅
 - [x] **Phase 3: User Experience** - Responsive mobile layout, loading states, and landing page ✅
 - [x] **Phase 4: Enhancement Features** - Historical comparison, per-holder view, and top movers dashboard ✅
-- [ ] **Phase 5: PDF Fix & Data Quality** - Fix holder name truncation in PDF extractor and re-import clean data
+- [x] **Phase 5: PDF Fix & Data Quality** - Fix holder name truncation in PDF extractor and re-import clean data (completed 2026-03-15)
 - [ ] **Phase 6: Entity Data Model & Management** - Schema, API, and admin UI for creating and managing entity groups
 - [ ] **Phase 7: Aggregate Views** - Entity profile page and aggregate ownership display on stock detail pages
 
@@ -182,7 +182,7 @@
 4. No regression in other extracted fields — stock codes, ownership percentages, and share counts remain correct
 5. Import script runs to completion without errors on all available historical PDFs
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 **Wave 1:**
 - [ ] [05-01-PLAN.md](.planning/phases/05-pdf-fix-and-data-quality/05-01-PLAN.md) — Audit script + fix tryIDXConcatenatedStrategy() holder name truncation bug

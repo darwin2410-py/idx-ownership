@@ -319,7 +319,7 @@ Mapping requirements to roadmap phases:
 | HOLD-01 | Phase 4 | Complete |
 | DASH-01 | Phase 4 | Complete |
 | PARSE-01 | Phase 5 | Complete |
-| PARSE-02 | Phase 5 | Pending |
+| PARSE-02 | Phase 5 | Complete |
 | ENTITY-01 | Phase 6 | Pending |
 | ENTITY-02 | Phase 6 | Pending |
 | ENTITY-03 | Phase 6 | Pending |

@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-03-15T08:41:22.588Z"
+status: completed
+last_updated: "2026-03-15T09:05:41.510Z"
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 17
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # STATE - IDX Ownership Visualizer
@@ -35,19 +35,28 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 ## Current Position
 
 **Milestone:** v1.1 (Lineage & Entity Linking)
-**Phase:** 5 (PDF Fix & Data Quality) - In progress (Plan 01 complete)
-**Plan:** 05-01 complete, 05-02 next
-**Status:** Plan 05-01 complete — PDF extractor fix applied, audit script created
+**Phase:** 5 (PDF Fix & Data Quality) - COMPLETE
+**Plan:** 05-01 complete, 05-02 complete
+**Status:** Phase 5 complete — PDF extractor fully fixed, database re-imported with clean names
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
-**Progress Bar (v1.1):** █░░░░░░░░░ 14% (1/7 plans)
+**Progress Bar (v1.1):** ██░░░░░░░░ 29% (2/7 plans)
 
 ### Next Action
-Execute Plan 05-02 (historical backfill — re-import historical PDFs with fixed extractor).
+Execute Phase 6: Entity Data Model & Management (entity grouping schema and UI).
 
 ### Context File
 `.planning/phases/05-pdf-fix-and-data-quality/05-01-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
+**Session 9:** Phase 5 Plan 02 Complete
+- Discovered second extractor bug: replace(/[A-Z]{3}$/, '') at line 122 of pdf-extractor.ts was stripping last 3 chars of holder names ending in uppercase (e.g. "PRAJOGO PANGESTU" -> "PRAJOGO PANGE")
+- Removed the trailing 3-char strip — Tbk boundary logic already excludes type code, making the strip redundant and destructive
+- Fixed audit-holder-names.ts to fallback to .env when .env.local is absent
+- Cleared all old data, re-imported with both fixes applied: 7253 clean records stored
+- Short-name holders reduced from 1046 (20.22%) to 446 (8.57%) — remaining are legitimate single-name individuals
+- "PRAJOGO PANGESTU" confirmed in full in DB (id=19260, len=16)
+- Commits: 42d640e (audit script dotenv fix), 097c64e (extractor trailing-strip fix)
+
 **Session 8:** Phase 5 Plan 01 Complete
 - Fixed tryIDXConcatenatedStrategy() in pdf-extractor.ts using Tbk boundary + first non-global type code match
 - Eliminated holder name truncation caused by type codes embedded in emiten names (e.g. CPD in 'ASURANSI CPD')
@@ -216,6 +225,11 @@ Execute Plan 05-02 (historical backfill — re-import historical PDFs with fixed
 20. **Non-Global Regex for Type Code Matching** (Decision ID: KD-020)
     - Rationale: Using /g flag on a regex in a loop causes stateful lastIndex reuse bug; non-global regex with .match() is idiomatic and avoids the pitfall entirely
     - Outcome: Implemented (TYPE_CODE_NONGLOBAL in pdf-extractor.ts)
+    - Date: 2026-03-15
+
+21. **No Post-Boundary Trailing Strip in PDF Extractor** (Decision ID: KD-021)
+    - Rationale: After Tbk boundary + first type code match, the holder name is already clean. Stripping trailing [A-Z]{3} is destructive to names ending in 3 uppercase chars (e.g. PANGESTU, SALIM, BAKRIE)
+    - Outcome: Implemented (removed replace(/[A-Z]{3}$/, '') from pdf-extractor.ts line 122, Phase 5 Plan 02)
     - Date: 2026-03-15
 
 ### Stack Choices
