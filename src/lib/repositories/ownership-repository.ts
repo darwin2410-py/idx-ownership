@@ -6,7 +6,7 @@
  */
 
 import { db, schema } from '../db';
-import { eq, and, desc, or, ilike } from 'drizzle-orm';
+import { eq, and, desc, or, ilike, sql } from 'drizzle-orm';
 import type {
   ExtractedOwnershipRecord,
   ExtractedPeriod,
@@ -553,4 +553,402 @@ export async function searchStocksWithFilters(filters: {
   }
 
   return Array.from(stockMap.values());
+}
+
+/**
+ * Find all holders with basic stats
+ * Returns all holders with their stock count and top stock
+ */
+export async function findAllHolders(periodId?: string): Promise<{
+  holder: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  stocksCount: number;
+  topStock: {
+    code: string;
+    name: string;
+    percentage: string;
+  } | null;
+}[]> {
+  // Use latest period if not specified
+  let targetPeriod = periodId;
+  if (!targetPeriod) {
+    const latestPeriod = await db
+      .select()
+      .from(schema.periods)
+      .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+      .limit(1);
+    if (latestPeriod.length === 0) {
+      return [];
+    }
+    targetPeriod = latestPeriod[0].id;
+  }
+
+  // Query holders with their ownership count and top stock
+  const result = await db
+    .select({
+      holderId: schema.holders.id,
+      holderName: schema.holders.canonicalName,
+      holderType: schema.holders.type,
+      stockCount: sql<number>`count(distinct ${schema.ownershipRecords.emitenId})`,
+      topStockCode: schema.emiten.id,
+      topStockName: schema.emiten.name,
+      topPercentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.holders)
+    .innerJoin(
+      schema.ownershipRecords,
+      eq(schema.holders.id, schema.ownershipRecords.holderId)
+    )
+    .innerJoin(
+      schema.emiten,
+      eq(schema.ownershipRecords.emitenId, schema.emiten.id)
+    )
+    .where(eq(schema.ownershipRecords.periodId, targetPeriod))
+    .groupBy(
+      schema.holders.id,
+      schema.holders.canonicalName,
+      schema.holders.type,
+      schema.emiten.id,
+      schema.emiten.name,
+      schema.ownershipRecords.ownershipPercentage
+    )
+    .orderBy(desc(sql`count(distinct ${schema.ownershipRecords.emitenId})`));
+
+  // Transform to get top stock per holder (first result after ordering)
+  const holderMap = new Map<number, any>();
+
+  for (const row of result) {
+    if (!holderMap.has(row.holderId)) {
+      holderMap.set(row.holderId, {
+        holder: {
+          id: row.holderId,
+          name: row.holderName,
+          type: row.holderType,
+        },
+        stocksCount: Number(row.stockCount),
+        topStock: {
+          code: row.topStockCode,
+          name: row.topStockName,
+          percentage: row.topPercentage.toString(),
+        },
+      });
+    }
+  }
+
+  return Array.from(holderMap.values());
+}
+
+/**
+ * Search holders by name
+ * Returns holders matching the query with their stock count and top stock
+ */
+export async function searchHoldersByName(
+  query: string,
+  periodId?: string
+): Promise<{
+  holder: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  stocksCount: number;
+  topStock: {
+    code: string;
+    name: string;
+    percentage: string;
+  } | null;
+}[]> {
+  // Use latest period if not specified
+  let targetPeriod = periodId;
+  if (!targetPeriod) {
+    const latestPeriod = await db
+      .select()
+      .from(schema.periods)
+      .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+      .limit(1);
+    if (latestPeriod.length === 0) {
+      return [];
+    }
+    targetPeriod = latestPeriod[0].id;
+  }
+
+  // Query with name filter
+  const result = await db
+    .select({
+      holderId: schema.holders.id,
+      holderName: schema.holders.canonicalName,
+      holderType: schema.holders.type,
+      stockCount: sql<number>`count(distinct ${schema.ownershipRecords.emitenId})`,
+      topStockCode: schema.emiten.id,
+      topStockName: schema.emiten.name,
+      topPercentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.holders)
+    .innerJoin(
+      schema.ownershipRecords,
+      eq(schema.holders.id, schema.ownershipRecords.holderId)
+    )
+    .innerJoin(
+      schema.emiten,
+      eq(schema.ownershipRecords.emitenId, schema.emiten.id)
+    )
+    .where(
+      and(
+        eq(schema.ownershipRecords.periodId, targetPeriod),
+        ilike(schema.holders.canonicalName, `%${query}%`)
+      )
+    )
+    .groupBy(
+      schema.holders.id,
+      schema.holders.canonicalName,
+      schema.holders.type,
+      schema.emiten.id,
+      schema.emiten.name,
+      schema.ownershipRecords.ownershipPercentage
+    )
+    .orderBy(desc(sql`count(distinct ${schema.ownershipRecords.emitenId})`))
+    .limit(50); // Limit results for performance
+
+  // Transform same as findAllHolders
+  const holderMap = new Map<number, any>();
+
+  for (const row of result) {
+    if (!holderMap.has(row.holderId)) {
+      holderMap.set(row.holderId, {
+        holder: {
+          id: row.holderId,
+          name: row.holderName,
+          type: row.holderType,
+        },
+        stocksCount: Number(row.stockCount),
+        topStock: {
+          code: row.topStockCode,
+          name: row.topStockName,
+          percentage: row.topPercentage.toString(),
+        },
+      });
+    }
+  }
+
+  return Array.from(holderMap.values());
+}
+
+/**
+ * Find all stocks for a holder
+ * Returns complete portfolio for a specific holder
+ */
+export async function findStocksByHolder(
+  holderId: number,
+  periodId?: string
+): Promise<{
+  emiten: Emiten;
+  rank: number;
+  sharesOwned: number;
+  ownershipPercentage: string;
+}[]> {
+  // Use latest period if not specified
+  let targetPeriod = periodId;
+  if (!targetPeriod) {
+    const latestPeriod = await db
+      .select()
+      .from(schema.periods)
+      .orderBy(desc(schema.periods.year), desc(schema.periods.month))
+      .limit(1);
+    if (latestPeriod.length === 0) {
+      return [];
+    }
+    targetPeriod = latestPeriod[0].id;
+  }
+
+  // Query all stocks held by this holder
+  const result = await db
+    .select({
+      emiten: schema.emiten,
+      rank: schema.ownershipRecords.rank,
+      sharesOwned: schema.ownershipRecords.sharesOwned,
+      ownershipPercentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(
+      schema.emiten,
+      eq(schema.ownershipRecords.emitenId, schema.emiten.id)
+    )
+    .where(
+      and(
+        eq(schema.ownershipRecords.holderId, holderId),
+        eq(schema.ownershipRecords.periodId, targetPeriod)
+      )
+    )
+    .orderBy(schema.ownershipRecords.rank);
+
+  return result.map((row) => ({
+    emiten: row.emiten,
+    rank: row.rank,
+    sharesOwned: row.sharesOwned,
+    ownershipPercentage: row.ownershipPercentage.toString(),
+  }));
+}
+
+/**
+ * Find holder by ID
+ * Returns holder details
+ */
+export async function findHolderById(holderId: number): Promise<{
+  id: number;
+  name: string;
+  type: string;
+} | null> {
+  const [holder] = await db
+    .select()
+    .from(schema.holders)
+    .where(eq(schema.holders.id, holderId))
+    .limit(1);
+
+  return holder
+    ? {
+        id: holder.id,
+        name: holder.canonicalName,
+        type: holder.type,
+      }
+    : null;
+}
+
+/**
+ * Get the previous period for a given period ID
+ * Calculates the month before the given period
+ */
+export async function getPreviousPeriod(periodId: string): Promise<Period | null> {
+  // Parse periodId (format: "YYYY-MM")
+  const [year, month] = periodId.split('-').map(Number);
+
+  // Calculate previous month
+  let prevYear = year;
+  let prevMonth = month - 1;
+  if (prevMonth === 0) {
+    prevMonth = 12;
+    prevYear = year - 1;
+  }
+
+  // Format as "YYYY-MM"
+  const prevPeriodId = `${prevYear}-${prevMonth.toString().padStart(2, '0')}`;
+
+  // Query database
+  const [period] = await db
+    .select()
+    .from(schema.periods)
+    .where(eq(schema.periods.id, prevPeriodId))
+    .limit(1);
+
+  return period || null;
+}
+
+/**
+ * Get historical comparison data for a stock
+ * Compares current period ownership with previous period
+ */
+export async function getHistoricalComparison(
+  emitenId: string,
+  currentPeriodId: string
+): Promise<{
+  holderName: string;
+  holderType: string;
+  currentRank: number;
+  currentShares: number;
+  currentPercentage: string;
+  previousRank: number | null;
+  previousShares: number | null;
+  previousPercentage: string | null;
+  changePercentage: number; // Can be positive (accumulation) or negative (disposal)
+  status: 'new' | 'exited' | 'increased' | 'decreased' | 'unchanged';
+}[]> {
+  // Get previous period
+  const previousPeriod = await getPreviousPeriod(currentPeriodId);
+  if (!previousPeriod) {
+    // No historical data available, return current holders with status 'new'
+    const currentHolders = await findOwnershipByStockWithHolders(emitenId, currentPeriodId);
+    return currentHolders.map(h => ({
+      holderName: h.holderName,
+      holderType: h.holderType,
+      currentRank: h.rank,
+      currentShares: h.sharesOwned,
+      currentPercentage: h.ownershipPercentage,
+      previousRank: null,
+      previousShares: null,
+      previousPercentage: null,
+      changePercentage: 0,
+      status: 'new' as const,
+    }));
+  }
+
+  // Fetch current and previous period ownership
+  const currentHolders = await findOwnershipByStockWithHolders(emitenId, currentPeriodId);
+  const previousHolders = await findOwnershipByStockWithHolders(emitenId, previousPeriod.id);
+
+  // Build maps for efficient lookup
+  const currentMap = new Map(currentHolders.map(h => [h.holderName, h]));
+  const previousMap = new Map(previousHolders.map(h => [h.holderName, h]));
+
+  // Collect all unique holder names
+  const allHolderNames = new Set([
+    ...currentHolders.map(h => h.holderName),
+    ...previousHolders.map(h => h.holderName),
+  ]);
+
+  // Build comparison array
+  const comparison = Array.from(allHolderNames).map(holderName => {
+    const current = currentMap.get(holderName);
+    const previous = previousMap.get(holderName);
+
+    const currentPct = current ? parseFloat(current.ownershipPercentage) : 0;
+    const previousPct = previous ? parseFloat(previous.ownershipPercentage) : 0;
+    const changePct = currentPct - previousPct;
+
+    // Determine status
+    let status: 'new' | 'exited' | 'increased' | 'decreased' | 'unchanged';
+    if (!previous && current) {
+      status = 'new';
+    } else if (previous && !current) {
+      status = 'exited';
+    } else if (changePct > 0.01) { // More than 0.01% change
+      status = 'increased';
+    } else if (changePct < -0.01) {
+      status = 'decreased';
+    } else {
+      status = 'unchanged';
+    }
+
+    return {
+      holderName,
+      holderType: current?.holderType || previous?.holderType || 'unknown',
+      currentRank: current?.rank || null,
+      currentShares: current?.sharesOwned || 0,
+      currentPercentage: current ? current.ownershipPercentage : '0.00',
+      previousRank: previous?.rank || null,
+      previousShares: previous?.sharesOwned || null,
+      previousPercentage: previous ? previous.ownershipPercentage : null,
+      changePercentage: changePct,
+      status,
+    };
+  });
+
+  // Sort: new holders first, then by current rank
+  return comparison.sort((a, b) => {
+    if (a.status === 'new' && b.status !== 'new') return -1;
+    if (a.status !== 'new' && b.status === 'new') return 1;
+    return (a.currentRank ?? 999) - (b.currentRank ?? 999);
+  });
+}
+
+/**
+ * Get all available periods for filtering
+ * Returns periods ordered by most recent first
+ */
+export async function getAllPeriods(): Promise<Period[]> {
+  return db
+    .select()
+    .from(schema.periods)
+    .orderBy(desc(schema.periods.year), desc(schema.periods.month));
 }
