@@ -1,188 +1,212 @@
 # Project Research Summary
 
-**Project:** IDX Ownership Visualizer
-**Domain:** Financial Data Visualization - Stock Ownership/Institutional Holdings
-**Researched:** 2025-03-14
-**Confidence:** MEDIUM
+**Project:** IDX Ownership Visualizer — v1.1 Lineage & Entity Linking
+**Domain:** Financial ownership data — entity resolution and network visualization for IDX shareholding platform
+**Researched:** 2026-03-15
+**Confidence:** HIGH
 
 ## Executive Summary
 
-The IDX Ownership Visualizer is a **data-intensive public web application** that extracts structured ownership data from unstructured IDX monthly PDFs and presents it through searchable, sortable visualizations. Expert practitioners build this as a **server-first Next.js application** with Server Components for performance, PostgreSQL for time-series data storage, and server-side PDF processing to ensure data quality and security.
+The IDX Ownership Visualizer v1.1 adds entity linking on top of an already-shipped v1 stack (Next.js 15, React 19, Neon PostgreSQL, Drizzle ORM). The core challenge is that IDX PDF extraction produces inconsistent and truncated holder names — "Prajogo Pangestu" becomes "Prajogo Pange" — making it impossible to group the same real-world person across stocks and periods without first fixing the source data. The recommended approach is to treat this as a data quality problem first (fix the PDF extractor, backfill historical records), then build the grouping layer as a thin admin-only join table on top of the existing schema, and finally add read-time aggregate queries and optional graph visualization on top.
 
-The recommended approach prioritizes **data integrity and user trust**. Build a robust PDF extraction pipeline with comprehensive validation before any visualization features. Use Next.js 15 App Router with Server Components to minimize client-side JavaScript while maintaining interactivity through strategic Client Components. Store historical data in Vercel Postgres with proper indexing for time-series queries, and implement entity resolution for shareholder names to enable accurate historical comparisons.
+The stack additions for v1.1 are minimal by design: pg_trgm (built into Neon PostgreSQL) handles fuzzy holder name search without a separate search service, @xyflow/react handles network graph rendering with React 19 compatibility, and shadcn's Command component (already present via cmdk) handles the entity grouping admin UI. No new infrastructure or external services are required. The only new npm package is `@xyflow/react`.
 
-**Key risks** center on PDF extraction brittleness (IDX format changes will break parsing), shareholder name deduplication (variations prevent accurate historical tracking), and performance degradation as historical data accumulates. Mitigate these through versioned extraction modules with data quality monitoring, canonical shareholder entity tables with fuzzy matching, and database indexing strategy designed from day one for time-series queries.
+The most significant risk is data integrity: incorrect entity groupings corrupt ownership aggregates for all users and are difficult to detect automatically. The mitigation is strict design choices — join table (not nullable FK on holders), admin-only writes, unique constraint preventing a holder from belonging to two groups, and conflict detection surfaced to the user before any merge is saved. Automated ML entity resolution must be explicitly rejected; manual grouping with fuzzy search as a candidate-finding assist is the correct approach for this dataset size and trust requirement.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-**Modern serverless-first stack optimized for Vercel deployment and data-heavy workloads.** Next.js 15 provides Server Components for fast initial loads and SEO, while React 19 enables progressive enhancement with client-side interactivity. TypeScript catches data transformation bugs critical for PDF parsing logic. Vercel Postgres offers auto-scaling PostgreSQL with native integration, while Drizzle ORM provides type-safe queries with smaller bundle size than Prisma—essential for serverless edge functions.
+The v1.1 additions require only one new npm package. The existing Neon PostgreSQL database gains a `pg_trgm` extension (one SQL statement, zero infrastructure change) for indexed fuzzy search on holder names. @xyflow/react replaces raw D3 or Cytoscape.js for network graph rendering — it is React-native, React 19 compatible, and sized for the expected graph scale (< 200 nodes per view). The shadcn Command combobox (cmdk transitive dep, already installed) handles the entity grouping UI.
+
+See full details: `.planning/research/STACK.md`
 
 **Core technologies:**
-- **Next.js 15 + React 19** — Framework with App Router for Server Components, native Vercel deployment, excellent SEO for public site
-- **TypeScript 5.x** — Type safety for complex PDF parsing logic and data transformations
-- **Vercel Postgres + Drizzle ORM** — Serverless PostgreSQL with auto-scaling, type-safe queries optimized for edge functions
-- **Recharts + TanStack Table 8.x** — SSR-compatible charting and headless table architecture for full styling control
-- **pdf-parse + Zod** — Server-side PDF text extraction with schema validation before database insertion
-- **shadcn/ui + Tailwind CSS** — Copy-paste components with zero runtime, excellent Vercel integration
-- **@tanstack/react-query** — Cache API responses, automatic refetching, optimistic UI if needed later
+- **pg_trgm** (Neon PostgreSQL built-in): fuzzy holder name search — indexed, scales to 5000+ holders, zero extra dependency
+- **@xyflow/react ^12.10.1**: network graph visualization — React-native, React 19 peer-dep confirmed, pan/zoom built-in
+- **cmdk ^1.1.1 via shadcn Command**: entity grouping combobox UI — already present as shadcn transitive dep
+- **drizzle-orm `sql` tag** (existing): raw pg_trgm similarity() queries — no version bump needed
+- **d3-force ^3.0.0** (optional, 5KB): custom layout for @xyflow/react if default auto-layout is insufficient at 100+ nodes
+
+**What NOT to add:** Meilisearch/Elasticsearch (overkill for 5000 names), Fuse.js as primary search (requires loading all names client-side on every cold start), full D3 (500KB, DOM conflicts with React), Cytoscape.js (150KB, Canvas rendering, overkill for < 200 nodes), vis-network (React wrappers unmaintained 5-8 years).
 
 ### Expected Features
 
-**Table stakes are non-negotiable**—users expect sortable tables, search/filter, historical data access, and export to CSV. Missing these makes the product feel incomplete. Data freshness indicators are critical because users must know the monthly update cadence.
+See full details: `.planning/research/FEATURES.md`
 
-**Must have (table stakes):**
-- **Sortable tables with search/filter** — users expect click-to-sort columns and instant search
-- **Historical data access** — financial data without history is useless for trend analysis
-- **Export to CSV/Excel** — power users need offline analysis in their own tools
-- **Data freshness indicator** — "Last updated: [date]" prevents wrong assumptions about recency
-- **Per-Emiten View** — primary use case: "Who owns stock X?" with top holders list
-- **Responsive mobile design** — Indonesian users heavily mobile; unusable mobile = failed product
+**Must have for v1.1 launch (P1):**
+- Fix PDF name truncation + backfill historical data — foundational; all other features depend on clean names
+- Fuzzy search with match highlighting — unblocks entity discovery; without this, grouping is manual and tedious
+- Entity grouping admin CRUD (`persons` + `person_holders` tables) — admin-only in v1.1, no public writes
+- Aggregate ownership view per emiten — combined %, combined shares, contributing holder list; the core payoff
 
-**Should have (competitive):**
-- **Accumulation/Disposal Detection** — automatically flag significant ownership changes (>5%), major time-saver
-- **Historical Trend Charts** — visual timeline of ownership changes for specific holder/stock
-- **Per-Holder View** — secondary use case: "What does holder Y own?" reverse lookup
-- **Top Movers Dashboard** — "Biggest accumulators/disposals this month" drives repeat visits
-- **Indonesian Language Support** — Bahasa Indonesia UI increases local adoption
+**Should have after validation (P2):**
+- Rank-within-emiten for aggregated group — "this group would rank #2 in TLKM"
+- "Also holds" sidebar on holder/group detail — cross-emiten navigation
+- Historical comparison for groups — extends existing comparison infrastructure
 
-**Defer (v2+):**
-- **Real-time updates** — impossible with monthly PDF data, sets false expectations
-- **Portfolio tracking** — adds authentication complexity, scope creep from core lookup value
-- **Trading signals** — legal liability, ownership data ≠ trading signal
-- **Social features** — moderation burden, doesn't align with "quick lookup" value
+**Defer to v2+ (P3):**
+- Network graph visualization — high implementation cost; aggregate view delivers most value first
+- Export grouped data to CSV
+- Public grouping submissions with admin review workflow
+
+**Anti-features to reject:** Automated ML entity resolution (false positives corrupt financial data; no labeled training data exists for IDX names), public/crowdsourced grouping (data integrity risk without moderation), animated force-directed graph layout (hairball at 200+ nodes), full UBO lineage (requires separate corporate hierarchy database, out of scope).
+
+**Indonesian market specifics that must be accommodated:** PT/Tbk prefix stripping before similarity scoring; Chinese-Indonesian name dual forms (Romanized vs. colonial transliteration); honorific variants (H., Ir., Dr.); government/BUMN entities must never be auto-suggested for merge with private entities even at high similarity scores.
 
 ### Architecture Approach
 
-**Layered architecture with clear separation between data processing, API, and presentation.** PDF Extraction Service parses and validates data before transactional database writes. Historical Analysis Service computes period-over-period changes. Repository pattern abstracts data access for testability. API Route Handlers provide HTTP interface with validation. Server Components fetch data on server for fast initial loads, Client Components handle interactivity (charts, tables, search). React Query caches server state, Zustand manages client-side filters.
+The architecture adds two new tables (`persons`, `person_holders`) that hang off the side of the existing `holders` table without modifying any existing FK chain. All ownership_records remain linked to holders; persons are an editorial grouping layer above holders. Aggregate queries compute at read time via GROUP BY JOIN — no denormalization on the persons row. The graph is bipartite (persons to emitens, no person-to-person edges at this scope), handled by two simple SELECT queries merged in a GraphService rather than recursive CTEs.
+
+See full details: `.planning/research/ARCHITECTURE.md`
 
 **Major components:**
-1. **PDF Extraction Service** — parse IDX PDFs, extract ownership data, validate structure with Zod schemas
-2. **Historical Analysis Service** — calculate changes between periods, detect accumulation/disposal patterns
-3. **Repository Layer** — abstract database operations (Stocks, Holders, Ownership repositories)
-4. **API Route Handlers** — standardized Next.js routes with validation, error handling, response formatting
-5. **Server Components** — data fetching with Drizzle queries, static layout, SSR for SEO
-6. **Client Components** — interactive charts (Recharts), tables (TanStack Table), search/filter UI
+1. **persons + person_holders tables** — new schema; composite PK prevents duplicate mappings; CASCADE/RESTRICT FK design preserves ownership_records integrity on delete
+2. **HolderRepository** (new) — fuzzy search via pg_trgm GIN index; stateless, parameterized queries only
+3. **PersonService** (new) — CRUD for persons and holder assignments; aggregate ownership query logic
+4. **GraphService** (new) — two-query pattern (nodes UNION + edges GROUP BY), merged in service layer; never rendered server-side
+5. **API routes** — `/api/holders/search`, `/api/persons/[id]/holders`, `/api/graph` — graph query logic lives in service, not route handler
+6. **Migration files** — 0001 (schema: persons + person_holders), 0002 (pg_trgm extension + GIN index, kept separate because CREATE EXTENSION is superuser DDL)
+
+**Build order (hard dependencies):** Schema migration → PDF parsing fix → Person/holder management API+UI → Aggregate view → Graph visualization
 
 ### Critical Pitfalls
 
-**Brittle PDF extraction is the single biggest risk**—when IDX changes PDF format, extraction logic tied to coordinates or fixed patterns fails silently, producing corrupt data. Avoid through multiple extraction strategies, data validation rules, review workflow for each import, store raw PDFs for re-processing, and version extraction logic per PDF format.
+See full details: `.planning/research/PITFALLS.md`
 
-**Shareholder name dedupellation is make-or-break for historical tracking**—treating names as strings prevents accurate comparison when "PT BANK CENTRAL ASIA" becomes "PT BCA" or spacing varies. Create canonical shareholder entity table, normalization rules, fuzzy matching (Levenshtein distance), manual merge workflow, and track all name variants.
+1. **PDF name truncation creates ghost holder records** — The extractor's `lastTypeIdx` logic fails when an emiten name contains a substring matching a type code (CPD, SCD). Fix the extractor first and run a backfill migration against all historical PDFs; orphaned truncated holders must be re-mapped before entity grouping begins, or aliases will be wrong from the start.
 
-**Missing data must not equal zero**—shareholders dropping below 1% threshold vanish from PDF but still hold shares. Mark as "below_threshold" not "zero", track last known position, show "< 1%" for disappeared holders, and flag reappearance to avoid false disposal signals.
+2. **group_id as nullable FK on holders instead of join table** — A direct FK cannot support audit trail, clean ungroup, or conflict detection. Use `person_holders` join table with composite PK, `added_at`, and `alias_note`. Never put grouping state directly on the holders row.
 
-**Performance degradation is inevitable without proactive design**—historical joins on millions of rows will timeout without indexing strategy. Index on (emiten_id, month), partition by year, use materialized views for common queries, implement Redis caching, and monitor slow queries from day one.
+3. **Holder in two groups causes aggregate double-counting** — Ownership percentages are counted twice if a holder_id appears in multiple groups. Enforce `UNIQUE (holder_id)` in the junction table and add a pre-insert conflict check with a human-readable 409 response rather than a raw 500 constraint violation.
 
-**No data freshness indicators mislead users**—without "Data as of [month/year]" prominently displayed, users assume real-time data. Show update history, next expected update countdown, flag stale data, and include completeness percentage.
+4. **Fuzzy search threshold too low merges unrelated Indonesian names** — PT Astra International and PT Astra Otoparts score high on trigram similarity due to shared prefix. Strip PT/Tbk tokens before scoring, raise threshold to 0.85-0.90 for institutional names, always require user confirmation before saving a merge — never auto-apply.
+
+5. **Network graph freezes browser with full dataset** — 955 stocks + 5172 holders = ~13,000 graph elements, well above the ~7,000 element degradation threshold for react-force-graph. Enforce a hard 200-node cap at the API level. Default view must be a filtered subgraph (single entity + immediate connections, max 50 nodes). Lazy-load the graph component with `dynamic({ ssr: false })`.
+
+---
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+Based on research, the architecture's explicit build order maps directly to phases. No phase can be safely reordered without breaking downstream work.
 
-### Phase 1: Data Foundation
-**Rationale:** PDF extraction and data storage are foundational—nothing works without data. This phase addresses the most critical risk (brittle PDF extraction) first, when codebase is smallest and fixes are cheapest.
+### Phase 1: PDF Parsing Fix + Data Backfill
 
-**Delivers:** Working PDF extraction pipeline, validated database schema, initial data import capability
-**Addresses:** PDF Extraction Pipeline (P1), Data Freshness Indicator (P1)
-**Avoids:** Brittle PDF extraction (Critical Pitfall #1), Shareholder name deduplication issues (Critical Pitfall #2)
+**Rationale:** All v1.1 features depend on clean holder names. Building entity grouping on top of truncated names creates aliases that must be manually re-merged later — a compounding debt that grows with every group created. This must be resolved first.
 
-### Phase 2: Core Visualizations
-**Rationale:** Once data exists, build primary use case (Per-Emiten View) to validate product value. Server-first approach ensures performance even with large datasets.
+**Delivers:** Fixed PDF extractor for current and future imports; backfill migration that re-maps truncated holder records in existing ownership_records; audit query confirming no orphaned holders after backfill.
 
-**Delivers:** Stock list page, stock detail page with ownership table (single period), search/filter/sort capabilities
-**Uses:** Next.js Server Components, TanStack Table, Recharts, Drizzle ORM
-**Implements:** Server-first data fetching pattern, Repository pattern, API route handlers
+**Addresses:** FEATURES.md P1 "Fix truncated holder names at source"; PITFALLS Pitfall 1 (ghost records) and Pitfall 9 (historical backfill divergence).
 
-### Phase 3: Historical Analysis
-**Rationale:** Secondary use case (Per-Holder View) and historical comparison require multiple periods of data and corporate action tracking. Build after core validates user interest.
+**Avoids:** Entering entity grouping phase with dirty source data that would require re-grouping after the fix. A holder named "PRAJOGO PANGE" in the DB at grouping time becomes an alias for the wrong string.
 
-**Delivers:** Historical comparison APIs, holder portfolio pages, accumulation/disposal detection, trend charts
-**Uses:** Historical Analysis Service, React Query caching, materialized views for performance
-**Avoids:** Missing data = zero fallacy (Critical Pitfall #3), corporate action tracking issues (Critical Pitfall #4)
+**Research flag:** Skip research-phase — code-level fix to existing pdf-extractor.ts; the truncation mechanism is already identified in PITFALLS.md with specific line numbers.
 
-### Phase 4: Polish & Scale
-**Rationale:** Add differentiators and optimize after core validates. Performance optimization requires real data patterns.
+### Phase 2: Schema Migration + Entity Grouping Admin
 
-**Delivers:** Top Movers dashboard, Indonesian language support, mobile optimization, query optimization, caching layer
-**Uses:** Redis caching, database partitioning, CDN for static assets
+**Rationale:** Tables must exist before any feature can use them. Entity grouping is admin-only in v1.1; shipping it before the aggregate view validates the data model against real data before investing in the read-side.
+
+**Delivers:** `persons` and `person_holders` tables with correct constraints (composite PK, `UNIQUE holder_id`, `alias_note`, `added_at`); pg_trgm extension + GIN index migration; admin UI for creating persons, fuzzy-searching holder candidates, and linking holders to persons with conflict detection.
+
+**Uses:** pg_trgm (STACK), cmdk/shadcn Command combobox (STACK), Drizzle sql tag (STACK).
+
+**Implements:** HolderRepository (fuzzy search), PersonService (CRUD), `/api/holders/search` and `/api/persons/[id]/holders` routes (ARCHITECTURE).
+
+**Avoids:** Pitfall 2 (FK vs join table), Pitfall 3 (double-counting via unique constraint), Pitfall 8 (conflict detection with 409 response), Pitfall 10 (pg_trgm not enabled in production).
+
+**Research flag:** Skip research-phase — patterns are well-established: junction table design, pg_trgm GIN index, shadcn combobox are all confirmed via official sources.
+
+### Phase 3: Aggregate Ownership View
+
+**Rationale:** This is the primary payoff of entity grouping — "the Hartono family controls X% of BBCA combined." It must be built before the graph because graph nodes represent entities that need meaningful aggregate data. It also requires updating the existing historical comparison to be group-aware to avoid two inconsistent views of the same data shown on different pages.
+
+**Delivers:** Aggregate ownership view per emiten showing combined %, combined shares, and contributing holder list for each person entity; updated `getHistoricalComparison()` with optional groupId parameter; rank-within-emiten for grouped entities (P2); cache invalidation on group membership changes via `revalidatePath()`.
+
+**Implements:** PersonService aggregate query pattern (GROUP BY JOIN CTE from ARCHITECTURE.md Pattern 3); prerequisite aggregate query for GraphService.
+
+**Avoids:** Pitfall 6 (inconsistent historical comparison if existing function is not updated), Pitfall 7 (stale cache after ungroup), Pitfall 3 (double-counting verified with automated assertions: sum of individual member percentages equals group aggregate for each stock).
+
+**Research flag:** Skip research-phase — standard SQL aggregation patterns; Next.js cache invalidation via revalidatePath is documented.
+
+### Phase 4: Network Graph Visualization
+
+**Rationale:** Deferred from v1.1 core MVP per FEATURES.md — highest implementation cost, not table stakes. Ships only after the aggregate view validates that entity groupings are useful and the data model is stable. The graph is a differentiator, not a prerequisite for value delivery.
+
+**Delivers:** Filtered network graph (default: single entity + immediate connections, max 50 nodes; expandable to 200 node hard cap); @xyflow/react rendering with lazy loading (no SSR); period-scoped graph API that rejects requests without a periodId; node sizing by ownership percentage; reset-to-default-view control.
+
+**Uses:** @xyflow/react ^12.10.1 (STACK); d3-force if auto-layout insufficient at 100+ nodes (STACK).
+
+**Implements:** GraphService two-query pattern (nodes UNION + edges GROUP BY from ARCHITECTURE.md Pattern 4); `/api/graph` route with hard cap enforcement.
+
+**Avoids:** Pitfall 5 (browser freeze — hard cap enforced at API level, not frontend), Pitfall 11 (bundle bloat — lazy load with `dynamic({ ssr: false })`), Pitfall 12 (edge explosion — graph API requires `periodId`, rejects requests without it).
+
+**Research flag:** Consider research-phase if team is unfamiliar with @xyflow/react — custom layout configuration with d3-force is moderately complex, and subgraph filtering UX patterns for financial data have sparse documentation. If team is already familiar with @xyflow/react, skip.
 
 ### Phase Ordering Rationale
 
-- **Data before UI**—PDF extraction complexity is highest risk; validate early before investing in visualization
-- **Per-Emiten before Per-Holder**—primary use case first, reverse lookup is secondary pattern
-- **Single-period before historical**—corporate action tracking and period comparison add significant complexity
-- **Core features before differentiators**—validate table stakes work before investing in Top Movers, detection algorithms
-- **Performance optimization last**—cannot optimize without real data patterns and query loads
+- Phase 1 before Phase 2: truncated names in the DB at grouping time create aliases for wrong strings; re-fixing names after grouping is far more expensive than fixing before — every incorrect alias requires manual re-merge.
+- Phase 2 before Phase 3: the aggregate query requires persons and person_holders to exist with real data to be meaningful; an empty entity table produces no validation signal.
+- Phase 3 before Phase 4: graph nodes represent entity groups; without aggregate data those nodes have no useful weight or label information. The graph is a visual layer on top of the aggregate, not an independent feature.
+- Graph deferred from v1.1 core: per FEATURES.md, the aggregate view delivers most analytical value at far lower cost. Validate demand from the aggregate view before investing in the graph.
 
 ### Research Flags
 
-**Phases likely needing deeper research during planning:**
+Phases likely needing deeper research during planning:
+- **Phase 4 (Network Graph):** @xyflow/react custom layout integration with d3-force, subgraph filtering interaction patterns, and pre-computed server-side layout are moderately complex. If the team has not used @xyflow/react before, a `/gsd:research-phase` focused on layout configuration and the expand/collapse interaction pattern is worthwhile.
 
-- **Phase 1 (PDF Extraction):** IDX PDF format unknown, likely needs `/gsd:research-phase` for extraction strategy validation. PDF structure may vary across emiten types.
-- **Phase 3 (Historical Analysis):** Corporate action data sources unclear, may need research on IDX split/bonus issue history for back-adjustment logic.
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (PDF Fix):** Code-level analysis already done in PITFALLS.md with specific file locations and truncation mechanism identified. No external research needed.
+- **Phase 2 (Schema + Entity Grouping):** Junction table, pg_trgm GIN index, shadcn Command combobox — all well-documented and confirmed via official sources.
+- **Phase 3 (Aggregate View):** Standard GROUP BY JOIN SQL + Next.js cache invalidation. Well-documented patterns.
 
-**Phases with standard patterns (skip research-phase):**
-
-- **Phase 2 (Core Visualizations):** Server Components, TanStack Table, Recharts all well-documented with established patterns
-- **Phase 4 (Polish & Scale):** Redis caching, database partitioning, CDN optimization are standard scaling practices
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | MEDIUM | WebSearch unavailable during research—recommendations based on training data. Verify Next.js 15 App Router patterns, pdf-parse table extraction capabilities, and Vercel Postgres free tier limits before implementation. |
-| Features | MEDIUM | Table stakes based on financial platform standards (Bloomberg, FactSet). Differentiators based on general domain knowledge—validate with Indonesian traders. Indonesia-specific competitive landscape unknown due to search limitations. |
-| Architecture | MEDIUM | Patterns are well-established for data-intensive Next.js apps. Server-first approach validated by Next.js docs. Repository pattern and service layer standard for this complexity. |
-| Pitfalls | MEDIUM | Based on common PDF extraction anti-patterns and time-series database scaling issues. Specific to domain but not to Indonesian market—IDX PDF format changes are unknown risk. |
+| Stack | HIGH | All versions confirmed via npm registry; pg_trgm confirmed via Neon official docs; @xyflow/react React 19 peer-dep verified via `npm info` |
+| Features | MEDIUM-HIGH | Table stakes derived from domain analysis and competitor research; IDX-specific name patterns verified against known real holder data; prioritization is opinionated but defensible against FEATURES.md analysis |
+| Architecture | HIGH | Standard SQL patterns (junction table, GIN index, bipartite graph queries); all confirmed via official Drizzle + Neon docs; build order derives directly from FK dependencies |
+| Pitfalls | HIGH (v1.1) / MEDIUM (v1) | v1.1 pitfalls backed by GitHub issue benchmarks, code-level analysis of pdf-extractor.ts at specific line numbers, and standard data integrity principles; v1 pitfalls based on general domain knowledge |
 
-**Overall confidence:** MEDIUM — Research provides solid foundation for roadmap creation but validation required during implementation, especially for PDF extraction (critical path) and Indonesian market feature preferences.
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **IDX PDF format:** No access to current IDX PDFs for validation. During Phase 1 planning, test pdf-parse on sample PDFs to confirm table extraction works. May need fallback to pdf2json or PDF.js if tables are complex.
-- **Corporate action data:** No research on IDX historical split/bonus issue data sources. During Phase 3 planning, investigate IDX corporate action announcements or consider manual data entry for major events.
-- **Indonesian user preferences:** Limited knowledge of local trading tools and feature expectations. During MVP validation, survey 5-10 Indonesian traders on feature priorities and UX preferences.
-- **Vercel Postgres limits:** Free tier may not support expected data volume (~500 emiten × 12 months × 50 holders = 300K records). Verify limits during Phase 1 setup.
-- **Performance benchmarks:** No real data on expected query loads. Add monitoring from day one and optimize based on actual usage patterns in Phase 4.
+- **Fuzzy threshold tuning for Indonesian names:** The right pg_trgm similarity threshold for Indonesian corporate names (after PT/Tbk stripping) is stated as 0.85-0.90 institutional / 0.2 for search, but needs empirical validation against the actual holders table. Plan a tuning pass during Phase 2 implementation using real production data from Neon.
+- **PDF extractor regression coverage:** PITFALLS.md identifies the truncation mechanism but the full set of truncation patterns in the existing holders table is unknown. A one-time audit (count holder names under 10 characters, check for known truncated values like "PRAJOGO PANGE") should be the first task in Phase 1.
+- **Historical re-extraction feasibility:** If original PDF files are no longer stored on disk, the backfill migration in Phase 1 cannot re-extract from source. Confirm whether all historical PDFs are retained before committing to the backfill approach; if not, a manual name correction script is the fallback.
+- **@xyflow/react at 100-200 nodes with React 19:** React 19 compatibility is confirmed by peer-dep range but there is no explicit React 19 callout in release notes. If graph performance is problematic at 100+ nodes, the d3-force layout fallback and the potential Sigma.js/WebGL upgrade path should be evaluated in Phase 4.
+
+---
 
 ## Sources
 
-### STACK.md
-- Next.js App Router Documentation (verify App Router patterns, Server Components)
-- Vercel Postgres Documentation (verify free tier limits, connection patterns)
-- TanStack Table Documentation (verify v8 API, pagination examples)
-- Recharts Documentation (verify SSR compatibility, latest API)
-- Drizzle ORM Documentation (verify serverless best practices)
-- pdf-parse npm package (verify API, table extraction capabilities)
-- shadcn/ui Documentation (verify installation steps, component list)
+### Primary (HIGH confidence)
+- `npm info @xyflow/react peerDependencies` — confirmed `react >= 17`, React 19 compatible
+- Neon pg_trgm docs (https://neon.com/docs/extensions/pg_trgm) — extension supported, enabled via CREATE EXTENSION
+- PostgreSQL pg_trgm official docs — GIN index, similarity threshold 0.3 default
+- Drizzle custom migrations docs (https://orm.drizzle.team/docs/kit-custom-migrations) — custom SQL migration pattern
+- Drizzle migrations with Neon (https://neon.com/docs/guides/drizzle-migrations) — neon-http driver behavior confirmed
+- react-force-graph GitHub Issue #223 — degradation at ~7,000 total graph elements, maintainer-confirmed
+- Next.js lazy loading docs — `dynamic({ ssr: false })` pattern for browser-only libraries
+- pdf-extractor.ts code analysis (lines 90-114) — truncation bug mechanism confirmed by reading actual codebase
 
-### FEATURES.md
-- Platform analysis: Bloomberg Terminal, FactSet, WhaleWisdom, SEC EDGAR
-- Financial data visualization best practices
-- Mobile-first financial applications (Robinhood, Stockbit patterns)
-- Public data website standards (data.gov, government transparency portals)
+### Secondary (MEDIUM confidence)
+- npmtrends: fuse.js vs flexsearch — fuse.js ~3.5M weekly downloads, context for library choice
+- Cytoscape.js GitHub Discussion #3088 — ~1,000 nodes before rendering degradation
+- Flagright / Splink documentation — fuzzy threshold tuning required per domain
+- OpenOwnership: Reconciling Beneficial Ownership Data — entity resolution approaches for financial data
+- IDX 1% Shareholding Disclosure Requirement (Caproasia, 2026-03-04) — disclosure threshold and data format context
+- Indonesian Conglomerates (Indonesia-Investments) — conglomerate entity cluster patterns for grouping examples
 
-### ARCHITECTURE.md
-- Next.js App Router Documentation: https://nextjs.org/docs/app
-- Prisma Best Practices: https://www.prisma.io/docs/guides/performance-and-optimization
-- React Query Documentation: https://tanstack.com/query/latest
-- Vercel Postgres: https://vercel.com/docs/storage/vercel-postgres
-
-### PITFALLS.md
-- Training data patterns from financial data systems
-- Common PDF extraction anti-patterns from software engineering literature
-- Database scaling best practices for time-series data
-- UX research on financial data visualization
-- Known issues from similar ownership tracking projects
-
-### Limitations
-- **Web search unavailable** during research due to rate limits (2026-03-14 reset)
-- **No direct access to IDX PDFs** for extraction validation
-- **No Indonesian market competitor analysis**—local tools (Stockbit, IDN Financials) not reviewed
-- **Training data cutoff June 2024**—some stack recommendations may be outdated
+### Tertiary (LOW confidence)
+- React Flow 12 release notes — React 19 compatibility inferred from peer-dep range; no explicit callout in release notes
 
 ---
-*Research completed: 2025-03-14*
+
+*Research completed: 2026-03-15*
 *Ready for roadmap: yes*

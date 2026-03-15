@@ -1,8 +1,8 @@
 # Architecture Research
 
-**Domain:** Next.js data visualization with historical stock ownership data
-**Researched:** 2025-03-14
-**Confidence:** MEDIUM
+**Domain:** Entity linking and graph queries on top of existing IDX ownership database
+**Researched:** 2026-03-15
+**Confidence:** HIGH
 
 ## Standard Architecture
 
@@ -12,511 +12,389 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Presentation Layer (Next.js)                 │
 ├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   Search     │  │   Charts     │  │    Tables    │          │
-│  │  Components  │  │  Components  │  │  Components  │          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
+│  │  Fuzzy Search│  │  Aggregate   │  │   Graph      │           │
+│  │  (holders)   │  │  View        │  │  Visualizer  │           │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘           │
 │         │                 │                 │                    │
 │         └─────────────────┴─────────────────┘                    │
-│                           │                                       │
-│  ┌────────────────────────┴────────────────────────┐            │
-│  │         Client State (Zustand/React Query)       │            │
-│  └─────────────────────────────────────────────────┘            │
-├─────────────────────────────────────────────────────────────────┤
-│                     API Layer (Next.js Route Handlers)           │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │  /api/stocks │  │/api/holders  │  │  /api/admin  │          │
-│  │              │  │              │  │              │          │
-│  │  • List      │  │  • Search    │  │  • Upload    │          │
-│  │  • Detail    │  │  • Portfolio │  │  • Extract   │          │
-│  │  • History   │  │  • History   │  │  • Validate  │          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
-│         │                 │                 │                    │
-├─────────┴─────────────────┴─────────────────┴────────────────────┤
-│                     Service Layer                                 │
-├─────────────────────────────────────────────────────────────────┤
+│                           │                                      │
+├───────────────────────────┼──────────────────────────────────────┤
+│                    API Layer (Next.js Route Handlers)            │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │                    PDF Extraction Service                  │   │
-│  │  • Parse PDF structure (pdf-parse/pdf-lib)                │   │
-│  │  • Extract ownership data                                 │   │
-│  │  • Validate & normalize                                   │   │
-│  │  • Detect accumulation/disposal patterns                  │   │
-│  └────────────────────────────┬─────────────────────────────┘   │
-│                                 │                                │
-│  ┌─────────────────────────────┴────────────────────────────┐   │
-│  │              Historical Analysis Service                   │   │
-│  │  • Compare periods (month-over-month)                     │   │
-│  │  • Calculate ownership changes                            │   │
-│  │  • Identify top holders & trends                          │   │
-│  └────────────────────────────┬─────────────────────────────┘   │
-│                                │                                │
-├───────────────────────────────┴────────────────────────────────┤
-│                     Data Access Layer (Prisma/Drizzle)         │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   Stocks     │  │   Holders    │  │  Ownership   │          │
-│  │   Repository │  │   Repository │  │  Repository  │          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
-│         │                 │                 │                    │
-├─────────┴─────────────────┴─────────────────┴────────────────────┤
-│                     Data Store Layer                             │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │  PostgreSQL  │  │     S3       │  │    Redis     │          │
-│  │              │  │              │  │  (Optional)  │          │
-│  │  • stocks    │  │  • PDFs      │  │              │          │
-│  │  • holders   │  │  • backups   │  │  • query     │          │
-│  │  • ownership │  │              │  │    cache     │          │
-│  │  • snapshots │  │              │  │              │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-└─────────────────────────────────────────────────────────────────┘
+│  │  /api/holders/search  /api/persons  /api/graph           │   │
+│  └──────────────────────────────────────────────────────────┘   │
+├──────────────────────────────────────────────────────────────────┤
+│                    Service / Repository Layer                     │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐     │
+│  │ PersonService  │  │ HolderService  │  │  GraphService  │     │
+│  └────────┬───────┘  └────────┬───────┘  └────────┬───────┘     │
+│           │                   │                   │              │
+├───────────┴───────────────────┴───────────────────┴──────────────┤
+│                 Neon PostgreSQL (Drizzle ORM)                     │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ ┌───────────┐  │
+│  │ persons  │ │ holders  │ │ person_holders   │ │ownership_ │  │
+│  │ (new)    │ │(existing)│ │ junction (new)   │ │ records   │  │
+│  └──────────┘ └──────────┘ └──────────────────┘ └───────────┘  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
 | Component | Responsibility | Typical Implementation |
 |-----------|----------------|------------------------|
-| **PDF Extraction Service** | Parse IDX PDFs, extract ownership data, validate structure | Server Action or API route with pdf-parse/pdf-lib |
-| **Historical Analysis Service** | Calculate changes between periods, detect accumulation/disposal | Business logic layer with data aggregation |
-| **Stock Repository** | Query stock metadata, list emiten, filter by sector | Prisma/Drizzle ORM with PostgreSQL |
-| **Holder Repository** | Search holders, get holder portfolios, track history | Prisma/Drizzle with indexed queries |
-| **Ownership Repository** | Query ownership records, period comparisons, top holders | Prisma/Drizzle with complex joins |
-| **API Route Handlers** | HTTP interface, request validation, error handling | Next.js App Router route handlers |
-| **Client Components** | Interactive charts, search/filter UI, table rendering | React + Recharts/TanStack Table |
-| **State Management** | Cache API responses, manage filters/sort, optimistic updates | React Query (SWR) + Zustand |
+| persons table | One row per real-world individual/entity | New table, manual admin-only inserts |
+| person_holders junction | Links one person to multiple holder records | New junction table with optional notes |
+| holders table | Existing — one row per unique name in PDFs | Add `trgm_gin` index; no breaking changes |
+| GraphService | Fetches nodes (persons+emitens) + edges (ownership records aggregated by person) | Drizzle raw SQL with CTE |
+| PersonService | CRUD for persons and their holder assignments | Drizzle typed queries |
+| HolderService | Fuzzy name search using pg_trgm | Drizzle sql`` tagged template with similarity() |
+
+---
+
+## Schema Changes
+
+### Existing Tables — What Changes
+
+**holders** — add a GIN trigram index only, no column changes:
+```sql
+CREATE INDEX holders_canonical_name_trgm_idx
+  ON holders USING GIN (canonical_name gin_trgm_ops);
+```
+This is backward-compatible. The existing `canonicalNameIdx` btree index stays for exact-match queries. The new GIN index handles fuzzy.
+
+**ownership_records** — no changes. The bigint fix for `shares_owned` (already in schema.ts but the migration shows `integer`) should be corrected in this migration pass as a separate ALTER.
+
+### New Tables
+
+**persons** — one row per real-world person or controlling entity:
+```sql
+CREATE TABLE persons (
+  id     serial PRIMARY KEY,
+  name   text   NOT NULL UNIQUE,  -- Display name, e.g. "Prajogo Pangestu"
+  notes  text,                    -- Optional background notes
+  created_at timestamp NOT NULL DEFAULT now()
+);
+```
+
+**person_holders** — junction table linking one person to many holders:
+```sql
+CREATE TABLE person_holders (
+  person_id  integer NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+  holder_id  integer NOT NULL REFERENCES holders(id) ON DELETE RESTRICT,
+  PRIMARY KEY (person_id, holder_id),
+  -- Optional: capture why this alias exists
+  alias_note text
+);
+CREATE INDEX person_holders_holder_id_idx ON person_holders(holder_id);
+CREATE INDEX person_holders_person_id_idx ON person_holders(person_id);
+```
+
+Junction design rationale:
+- Composite PK prevents duplicate mappings.
+- `CASCADE` on person delete removes the mapping rows but leaves holder rows intact (existing ownership_records are unaffected).
+- `RESTRICT` on holder delete prevents removing a holder that has been tagged to a person without unlinking first — surfaces data integrity issues visibly.
+- `alias_note` (nullable) is cheap to add now; useful later to record "same ABN", "same NPWP", "director of", etc.
+
+### Schema Dependency Map
+
+```
+persons
+  └─── person_holders ──→ holders ──→ ownership_records ──→ emiten
+                                                         ──→ periods
+```
+
+No existing FK chain is modified. The new tables hang off the side of `holders`.
+
+---
 
 ## Recommended Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── (dashboard)/       # Route group for layout
-│   │   ├── page.tsx       # Homepage (stock list)
-│   │   ├── stock/
-│   │   │   ├── [ticker]/
-│   │   │   │   └── page.tsx    # Stock detail with ownership
-│   │   │   └── page.tsx        # Stock search/list
-│   │   └── holder/
-│   │       ├── [id]/
-│   │       │   └── page.tsx    # Holder detail with portfolio
-│   │       └── page.tsx        # Holder search/list
-│   ├── admin/              # Admin routes (protected)
-│   │   ├── upload/
-│   │   │   └── page.tsx        # PDF upload interface
-│   │   └── extract/
-│   │       └── page.tsx        # Extraction status/results
-│   ├── api/                # API routes
-│   │   ├── stocks/
-│   │   │   ├── route.ts        # GET list, POST filter
-│   │   │   └── [ticker]/
-│   │   │       └── route.ts    # GET detail with history
+├── lib/
+│   ├── db/
+│   │   ├── schema.ts          # Add persons + person_holders tables here
+│   │   ├── index.ts           # No change needed
+│   │   └── migrate.ts         # No change needed
+│   ├── repositories/
+│   │   ├── ownership-repository.ts   # Existing
+│   │   ├── person-repository.ts      # New: CRUD for persons + junction
+│   │   └── holder-repository.ts      # New: fuzzy search, list unlinked
+│   ├── services/
+│   │   ├── import-service.ts         # Existing
+│   │   ├── person-service.ts         # New: aggregate logic, graph data
+│   │   └── graph-service.ts          # New: node+edge query
+│   └── types/
+│       ├── pdf-data.ts               # Existing
+│       └── graph.ts                  # New: GraphNode, GraphEdge types
+├── app/
+│   ├── api/
 │   │   ├── holders/
-│   │   │   ├── route.ts        # GET search, POST filter
+│   │   │   └── search/route.ts       # Fuzzy search endpoint
+│   │   ├── persons/
+│   │   │   ├── route.ts              # List + create persons
 │   │   │   └── [id]/
-│   │   │       └── route.ts    # GET portfolio, history
-│   │   └── admin/
-│   │       ├── upload/
-│   │       │   └── route.ts    # POST PDF upload
-│   │       └── extract/
-│   │           └── route.ts    # POST trigger extraction
-│   ├── layout.tsx           # Root layout
-│   └── globals.css          # Global styles
-├── components/             # React components
-│   ├── ui/                 # Reusable UI components
-│   │   ├── table.tsx       # Data table with sort/filter
-│   │   ├── chart.tsx       # Chart wrapper
-│   │   └── search.tsx      # Search input
-│   ├── stock/              # Stock-specific components
-│   │   ├── stock-card.tsx
-│   │   ├── ownership-table.tsx
-│   │   └── history-chart.tsx
-│   └── holder/             # Holder-specific components
-│       ├── holder-card.tsx
-│       ├── portfolio-table.tsx
-│       └── accumulation-badge.tsx
-├── lib/                   # Utility functions
-│   ├── pdf/              # PDF extraction
-│   │   ├── parser.ts     # Parse PDF structure
-│   │   ├── extractor.ts  # Extract ownership data
-│   │   └── validator.ts  # Validate extracted data
-│   ├── db/               # Database
-│   │   ├── prisma.ts     # Prisma client
-│   │   └── seed.ts       # Seed data
-│   ├── services/         # Business logic
-│   │   ├── stock.service.ts
-│   │   ├── holder.service.ts
-│   │   └── analysis.service.ts
-│   └── utils/            # Utilities
-│       ├── format.ts     # Formatters (number, date)
-│       └── validation.ts # Zod schemas
-├── hooks/                # React hooks
-│   ├── useStockData.ts   # Fetch stock data
-│   ├── useHolderData.ts  # Fetch holder data
-│   └── useFilters.ts     # Filter/sort state
-├── stores/               # State management
-│   └── filter.store.ts   # Zustand store for filters
-└── types/                # TypeScript types
-    ├── stock.ts
-    ├── holder.ts
-    └── ownership.ts
+│   │   │       ├── route.ts          # Get/update/delete person
+│   │   │       └── holders/route.ts  # Manage holder assignments
+│   │   └── graph/
+│   │       └── route.ts              # Graph nodes+edges for period
+│   └── (pages)
+drizzle/
+│   ├── 0000_smart_maddog.sql         # Existing v1 migration
+│   ├── 0001_entity_linking.sql       # New: persons + person_holders
+│   └── 0002_trgm_extension.sql       # New: CREATE EXTENSION + GIN index
 ```
 
 ### Structure Rationale
 
-- **app/:** Next.js 15 App Router convention — file-based routing with colocated API routes
-- **components/:** Reusable UI components organized by domain (stock/holder) vs generic (ui)
-- **lib/pdf/:** Isolated PDF extraction logic — can be swapped for different parsing strategies
-- **lib/services/:** Business logic layer separate from API routes — reusable across routes
-- **lib/db/:** Database access abstraction — enables easy ORM changes
-- **hooks/:** Custom React hooks for data fetching — encapsulates React Query logic
-- **stores/:** Client-side state management — minimal usage for filter/sort state
-- **types/:** Shared TypeScript types — ensures type safety across layers
+- **Separate `person-repository.ts` and `holder-repository.ts`**: The holder repository gains fuzzy-search responsibility without polluting the ownership import path. Person repository stays focused on entity management only.
+- **`graph-service.ts` separate from `person-service.ts`**: Graph queries are read-heavy, potentially complex CTEs, and will likely need tuning. Isolating them makes profiling easier.
+- **Two migration files (0001 + 0002)**: `CREATE EXTENSION` is a superuser-level DDL; keeping it separate allows running it once against a shared Neon instance without bundling it into schema migrations that may be replayed.
+
+---
 
 ## Architectural Patterns
 
-### Pattern 1: Server-First Data Fetching with Progressive Enhancement
+### Pattern 1: Junction Table for Person-to-Holder Grouping
 
-**What:** Fetch data on the server using Server Components, stream to client, enhance with Client Components for interactivity.
+**What:** A `person_holders` join table with composite PK stores the many-to-many relationship between persons (real entities) and holders (PDF name strings).
 
-**When to use:** Public websites with SEO requirements, data-heavy dashboards.
+**When to use:** When one real-world entity appears under multiple distinct name strings across different PDFs or time periods. The junction table lets you assign or remove aliases without touching ownership_records.
 
-**Trade-offs:**
-- Pros: Fast initial load, SEO-friendly, reduced client JS
-- Cons: More complex data flow, need to pass server data to client
+**Trade-offs:** Slightly more JOINs in queries; but allows the grouping to be built and edited incrementally without any data migration of historical records.
 
-**Example:**
+**Example — list all holders assigned to a person:**
 ```typescript
-// app/stock/[ticker]/page.tsx (Server Component)
-import { StockHeader } from '@/components/stock/stock-header'
-import { OwnershipTable } from '@/components/stock/ownership-table'
-import { StockService } from '@/lib/services/stock.service'
-
-export default async function StockPage({ params }: { params: { ticker: string } }) {
-  const stock = await StockService.getStock(params.ticker)
-  const ownership = await StockService.getOwnership(params.ticker)
-
-  return (
-    <div>
-      <StockHeader stock={stock} /> {/* Server component */}
-      <OwnershipTable initialData={ownership} /> {/* Client component with initial data */}
-    </div>
-  )
-}
+const rows = await db
+  .select({ holderId: personHolders.holderId, canonicalName: holders.canonicalName })
+  .from(personHolders)
+  .innerJoin(holders, eq(personHolders.holderId, holders.id))
+  .where(eq(personHolders.personId, personId));
 ```
 
-### Pattern 2: Repository Pattern for Data Access
+### Pattern 2: pg_trgm GIN Index for Fuzzy Search
 
-**What:** Abstract database operations behind repository interfaces.
+**What:** Enable `pg_trgm` extension, create a GIN index on `holders.canonical_name`, and use the `%` similarity operator in queries.
 
-**When to use:** Multiple data sources, complex queries, testability requirements.
-
-**Trade-offs:**
-- Pros: Testable, swapable data sources, centralized query logic
-- Cons: More boilerplate, potential over-abstraction for simple CRUD
-
-**Example:**
-```typescript
-// lib/db/repositories/stock.repository.ts
-export class StockRepository {
-  constructor(private db: PrismaClient) {}
-
-  async findByTicker(ticker: string) {
-    return this.db.stock.findUnique({
-      where: { ticker },
-      include: { sector: true }
-    })
-  }
-
-  async listTopHolders(ticker: string, period: string, limit = 10) {
-    return this.db.ownership.findMany({
-      where: {
-        stock: { ticker },
-        period
-      },
-      orderBy: { shares: 'desc' },
-      take: limit,
-      include: { holder: true }
-    })
-  }
-}
-
-// lib/services/stock.service.ts
-export class StockService {
-  private repo = new StockRepository(prisma)
-
-  async getStock(ticker: string) {
-    return this.repo.findByTicker(ticker)
-  }
-
-  async getTopHolders(ticker: string, period: string) {
-    return this.repo.listTopHolders(ticker, period)
-  }
-}
-```
-
-### Pattern 3: API Route Handler Pattern
-
-**What:** Standardized structure for Next.js API routes with validation, error handling, and response formatting.
-
-**When to use:** All API routes to ensure consistency.
+**When to use:** For the "find holder by partial name" UI. pg_trgm handles Indonesian corporate name fragments well (e.g. "DANANTARA", "ASTRA", partial spellings from truncated PDFs).
 
 **Trade-offs:**
-- Pros: Consistent error handling, DRY validation, easy to test
-- Cons: More boilerplate for simple endpoints
+- GIN index adds ~20% storage on the holders table. At the current scale (likely < 10K unique holder names), this is negligible.
+- Similarity threshold (default 0.3) may need tuning for Indonesian names — test with `SET pg_trgm.similarity_threshold = 0.2`.
+- Application-level fuzzy (fuse.js) is an alternative but requires loading all holder names into memory on each serverless cold start. Not recommended for this use case.
 
-**Example:**
+**Example query pattern (using Drizzle sql tag):**
 ```typescript
-// app/api/stocks/[ticker]/route.ts
-import { z } from 'zod'
-import { StockService } from '@/lib/services/stock.service'
+import { sql } from 'drizzle-orm';
 
-const schema = z.object({
-  ticker: z.string().regex(/^[A-Z]{4}$/),
-  period: z.string().optional().default('latest')
-})
-
-export async function GET(
-  request: Request,
-  { params }: { params: { ticker: string } }
-) {
-  try {
-    // Validate input
-    const { ticker, period } = schema.parse({
-      ticker: params.ticker,
-      period: new URL(request.url).searchParams.get('period') || undefined
-    })
-
-    // Fetch data
-    const service = new StockService()
-    const stock = await service.getStockWithHistory(ticker, period)
-
-    if (!stock) {
-      return Response.json(
-        { error: 'Stock not found' },
-        { status: 404 }
-      )
-    }
-
-    return Response.json(stock)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return Response.json(
-        { error: 'Invalid input', issues: error.issues },
-        { status: 400 }
-      )
-    }
-
-    return Response.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+const results = await db.execute(sql`
+  SELECT id, canonical_name, type,
+         similarity(canonical_name, ${query}) AS score
+  FROM   holders
+  WHERE  canonical_name % ${query}
+  ORDER  BY score DESC
+  LIMIT  20
+`);
 ```
 
-### Pattern 4: React Query for Client State Synchronization
-
-**What:** Use React Query (SWR) to cache server state on client, refetch on focus, optimistic updates.
-
-**When to use:** Interactive dashboards, real-time data, filterable/sortable lists.
-
-**Trade-offs:**
-- Pros: Automatic caching, refetching, loading states
-- Cons: Additional library, complexity for simple use cases
-
-**Example:**
-```typescript
-// hooks/useStockData.ts
-import { useQuery } from '@tanstack/react-query'
-
-export function useStockData(ticker: string) {
-  return useQuery({
-    queryKey: ['stock', ticker],
-    queryFn: () => fetch(`/api/stocks/${ticker}`).then(r => r.json()),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-  })
-}
-
-export function useOwnershipHistory(ticker: string) {
-  return useQuery({
-    queryKey: ['ownership', ticker, 'history'],
-    queryFn: () => fetch(`/api/stocks/${ticker}/history`).then(r => r.json()),
-    refetchOnWindowFocus: false,
-  })
-}
+**Migration — must run before any schema migration that uses trgm indexes:**
+```sql
+-- 0002_trgm_extension.sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX holders_canonical_name_trgm_idx
+  ON holders USING GIN (canonical_name gin_trgm_ops);
 ```
+
+Confidence: HIGH — pg_trgm is a standard bundled Postgres extension. Neon official docs confirm it is supported and enabled via `CREATE EXTENSION IF NOT EXISTS pg_trgm`. [Source: https://neon.com/docs/extensions/pg_trgm]
+
+### Pattern 3: Aggregate Ownership via Group-by JOIN
+
+**What:** Sum ownership percentages across all holders linked to the same person for a given emiten+period combination.
+
+**When to use:** The "aggregate view" feature — person X owns 12% of TLKM via 3 different entities.
+
+**Trade-offs:** This is a read-time aggregation, not stored. At current scale it is fast enough; if performance degrades later, a materialized view or cached JSON column is the next step.
+
+**Example CTE pattern:**
+```sql
+SELECT
+  p.id          AS person_id,
+  p.name        AS person_name,
+  e.id          AS emiten_id,
+  o.period_id,
+  SUM(o.shares_owned)         AS total_shares,
+  SUM(o.ownership_percentage) AS total_pct
+FROM persons p
+JOIN person_holders ph ON ph.person_id = p.id
+JOIN holders h         ON h.id = ph.holder_id
+JOIN ownership_records o ON o.holder_id = h.id
+JOIN emiten e          ON e.id = o.emiten_id
+WHERE o.period_id = $1
+GROUP BY p.id, p.name, e.id, o.period_id
+ORDER BY total_pct DESC;
+```
+
+### Pattern 4: Graph Data as Nodes + Edges from SQL
+
+**What:** Produce a graph payload (for a visualization library like react-force-graph or D3) directly from a SQL query. Persons and emitens are nodes; aggregate ownership relationships are edges.
+
+**When to use:** The network visualization feature.
+
+**Trade-offs:** A pure Postgres approach (two queries: one for nodes, one for edges) is simpler than recursive CTEs here because the ownership graph is not hierarchical — it is bipartite (persons ↔ emitens, no person-to-person edges needed at this stage).
+
+**Two-query approach (recommended over single complex CTE):**
+
+Query 1 — nodes:
+```sql
+-- Person nodes
+SELECT 'person' AS node_type, p.id::text AS id, p.name AS label
+FROM   persons p
+UNION ALL
+-- Emiten nodes that appear in this period
+SELECT 'emiten', e.id, e.name
+FROM   emiten e
+WHERE  EXISTS (
+  SELECT 1 FROM ownership_records o WHERE o.emiten_id = e.id AND o.period_id = $1
+);
+```
+
+Query 2 — edges (aggregate per person+emiten):
+```sql
+SELECT
+  p.id::text  AS source,
+  e.id        AS target,
+  SUM(o.ownership_percentage)::float AS weight
+FROM persons p
+JOIN person_holders ph ON ph.person_id = p.id
+JOIN ownership_records o ON o.holder_id = ph.holder_id
+JOIN emiten e ON e.id = o.emiten_id
+WHERE o.period_id = $1
+GROUP BY p.id, e.id
+HAVING SUM(o.ownership_percentage) > 0;
+```
+
+The API route `/api/graph?period=2026-02` merges both results into `{ nodes: [...], edges: [...] }` before returning to the client.
+
+---
 
 ## Data Flow
 
-### Request Flow (User Viewing Stock)
+### Fuzzy Search Flow
 
 ```
-User navigates to /stock/TLKM
+User types "DANANTARA" in search box
     ↓
-Next.js Server Component (app/stock/[ticker]/page.tsx)
+Debounced fetch → GET /api/holders/search?q=DANANTARA
     ↓
-StockService.getStock(ticker)
+HolderRepository.fuzzySearch(q)
+    → SELECT ... FROM holders WHERE canonical_name % $1 ORDER BY similarity DESC
     ↓
-StockRepository.findByTicker(ticker)
+Returns: [{ id, canonicalName, type, alreadyLinked: boolean }]
     ↓
-PostgreSQL Query (SELECT * FROM stocks WHERE ticker = 'TLKM')
-    ↓
-StockRepository.listTopHolders(ticker, 'latest')
-    ↓
-PostgreSQL Query with JOIN (ownership + holders)
-    ↓
-Data returned to Server Component
-    ↓
-Render HTML with initial data (SSR)
-    ↓
-Hydration on client
-    ↓
-Client Components (OwnershipTable) mount
-    ↓
-React Query fetches fresh data (optional)
-    ↓
-User interacts (sort/filter)
-    ↓
-Client-side state updates (Zustand)
-    ↓
-React Query refetches with new params
+UI shows list; user clicks "Link to person" → POST /api/persons/:id/holders
 ```
 
-### PDF Upload Flow (Admin)
+### Entity Grouping Admin Flow
 
 ```
-Admin uploads PDF via /admin/upload
+Admin navigates to /admin/persons
     ↓
-POST /api/admin/upload
+Creates new person (name, notes) → POST /api/persons
     ↓
-PDF stored in S3 (or local /public/uploads)
+Searches for holder aliases → GET /api/holders/search?q=...
     ↓
-Trigger extraction job
+Links each holder to person → POST /api/persons/:id/holders { holderId }
+    → INSERT INTO person_holders (person_id, holder_id)
     ↓
-PDFExtractionService.parse(pdfBuffer)
-    ↓
-pdf-parse extracts text
-    ↓
-Extract ownership data using regex/patterns
-    ↓
-Validate extracted data (Zod schema)
-    ↓
-StockService.batchUpsertOwnership(extractedData)
-    ↓
-Transaction:
-  - Upsert holders
-  - Upsert stocks
-  - Insert ownership records
-  - Create period snapshot
-    ↓
-Calculate period-over-period changes
-    ↓
-Store accumulation/disposal flags
-    ↓
-Return success with summary
+Aggregate view auto-updates (read-time join, no extra step)
 ```
 
-### State Management
+### Aggregate / Graph Read Flow
 
 ```
-Server State (Database)
-    ↓ (API routes / Server Actions)
-Client State (React Query Cache)
-    ↓ (useQuery hooks)
-React Components (read-only display)
-    ↓ (user actions)
-Actions (filters, sort, pagination)
-    ↓ (Zustand store)
-URL State (search params)
+User opens /emiten/TLKM
     ↓
-React Query refetch with new params
+Page fetches GET /api/graph?period=2026-02&emiten=TLKM
+    ↓
+GraphService.getGraphForPeriod(period, emitenFilter?)
+    → Run nodes query + edges query (two parallel db.execute calls)
+    ↓
+Merge into { nodes, edges }; return as JSON
+    ↓
+react-force-graph (or D3) renders network diagram
 ```
 
-### Key Data Flows
+---
 
-1. **PDF → Database:** Admin uploads PDF → S3 → Extraction Service → Parse → Validate → Insert/Update → PostgreSQL
-2. **Database → UI:** User request → API Route → Service → Repository → PostgreSQL → Transform → JSON → Client
-3. **Client Interaction:** User filter → URL update → React Query refetch → API Route with params → Filtered results → UI update
+## Migration Approach (Drizzle + Neon)
 
-## Scaling Considerations
+### Recommended: Generate + Custom Migration Combo
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-1k users | Single Vercel deployment, PostgreSQL on Vercel (Neon), no caching needed |
-| 1k-100k users | Add Redis cache for common queries, CDN for static assets, database connection pooling, consider read replicas |
-| 100k+ users | Separate extraction worker (not in API route), background job queue (BullMQ), data preprocessing/aggregation, consider time-series DB for ownership history, CDN caching for API responses |
+The project already uses `drizzle-kit generate` + `src/lib/db/migrate.ts`. The entity linking milestone requires:
 
-### Scaling Priorities
+1. **Schema changes** (generated automatically): Add `persons` and `person_holders` tables to `schema.ts`, then run `npm run db:generate`. Drizzle Kit diffs the schema and produces `0001_entity_linking.sql`.
 
-1. **First bottleneck:** PDF extraction in API route (timeout risk)
-   - Fix: Move to background job, use queue-based processing, return job ID, poll for status
+2. **Extension + index** (custom migration): Run `npx drizzle-kit generate --custom --name=trgm_extension` to get an empty `0002_trgm_extension.sql`. Manually add:
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS pg_trgm;
+   CREATE INDEX IF NOT EXISTS holders_canonical_name_trgm_idx
+     ON holders USING GIN (canonical_name gin_trgm_ops);
+   ```
 
-2. **Second bottleneck:** Database queries for historical comparisons (complex joins)
-   - Fix: Add indexes on (stock_id, period), materialized views for common queries, Redis cache for热门 stocks
+3. **Apply**: `npm run db:migrate` runs both in sequence.
 
-3. **Third bottleneck:** Client-side rendering for large tables (performance)
-   - Fix: Virtualization (react-virtual), pagination, server-side pagination
+### Important: Migration Ordering
+
+The `CREATE EXTENSION` SQL must run before any query that uses `gin_trgm_ops` or the `%` operator. Since both are in separate migration files and drizzle-kit applies them in filename order, the naming `0002_trgm_extension` ensures it runs after the table creation in `0001`.
+
+### Important: neon-http driver limitation
+
+The existing codebase notes that `neon-http` driver does not support transactions. This is fine for schema migrations — each `-->statement-breakpoint` in generated SQL runs as independent statements. No change needed to `migrate.ts`.
+
+For local dev using `db:push` (`drizzle-kit push`) — this works fine for iterating on schema but **skips the custom migration file** containing `CREATE EXTENSION`. Always run `db:migrate` in production, and run the extension SQL manually once in local dev:
+```bash
+# One-time local setup
+psql $DATABASE_URL -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+```
+
+---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Client-Side PDF Extraction
+### Anti-Pattern 1: Storing Aggregated Ownership on the Person Row
 
-**What people do:** Upload PDF to client, extract in browser using pdf.js.
+**What people do:** Add `total_shares` and `total_pct` columns to the `persons` table and update them on every import.
 
-**Why it's wrong:**
-- Slow on client devices
-- Exposes PDF structure publicly
-- Can't reuse extraction logic
-- Browser memory limitations
+**Why it's wrong:** These values are period-specific. A person's "total ownership" changes every month. Storing it denormalized means stale data between imports and complex update logic in the import pipeline.
 
-**Do this instead:** Server-side extraction in API route or background job, store structured data in database, serve JSON to client.
+**Do this instead:** Compute aggregations at read time via the GROUP BY join pattern (Pattern 3). For the current data scale (monthly updates, hundreds of persons, thousands of records), read-time aggregation is fast enough.
 
-### Anti-Pattern 2: Monolithic API Routes
+### Anti-Pattern 2: Using Application-Level Fuzzy Search (fuse.js) Instead of pg_trgm
 
-**What people do:** Put all business logic in API route handlers.
+**What people do:** Load all holder canonical names into memory on the API route, run fuse.js similarity, return matches.
 
-**Why it's wrong:**
-- Hard to test
-- Can't reuse logic
-- Violates separation of concerns
-- Difficult to mock for testing
+**Why it's wrong:** Neon serverless function cold starts with a full holder table scan (even cached) is wasteful. It also means the search behavior depends on client-side library config rather than database-level indexing. pg_trgm GIN index scales to millions of rows; fuse.js in a serverless function does not.
 
-**Do this instead:** Extract business logic to service layer, API routes only handle HTTP concerns (validation, error handling, response formatting).
+**Do this instead:** Enable pg_trgm, create the GIN index, use the `%` operator in a parameterized query. The index makes it sub-10ms at any realistic holder count.
 
-### Anti-Pattern 3: N+1 Queries in Server Components
+### Anti-Pattern 3: Putting person_id Directly on the holders Table
 
-**What people do:** Fetch stocks, then loop to fetch ownership for each.
+**What people do:** Add a nullable `person_id` FK column to `holders` instead of a junction table.
 
-**Why it's wrong:**
-- Database round-trips = slow
-- Doesn't scale with data size
-- Unnecessary load on database
+**Why it's wrong:** A holder name cannot belong to two persons (no many-to-many). But more critically, adding a column to `holders` requires an ALTER TABLE on a table that may already have thousands of rows and is actively used by the import pipeline. It also conflates the extraction-time concept (a holder name from a PDF) with the editorial concept (a person grouping). They should remain separate.
 
-**Do this instead:** Use JOIN queries or include in Prisma, batch fetch with `findMany` + `in` clause, consider dataLoader pattern.
+**Do this instead:** Use the `person_holders` junction table. It adds zero changes to existing tables and is reversible without touching ownership_records.
 
-### Anti-Pattern 4: Skipping Database Indexes
+### Anti-Pattern 4: Recursive CTE for Ownership Graph
 
-**What people do:** Create tables without indexes on common query fields.
+**What people do:** Model the ownership graph as a recursive traversal (AGE extension, recursive CTE with depth).
 
-**Why it's wrong:**
-- Full table scans = slow queries
-- Performance degrades with data size
-- Database becomes bottleneck
+**Why it's wrong:** The ownership data here is bipartite — persons own emitens, emitens don't own persons (at this milestone scope). Recursive CTEs add complexity with no benefit for a two-level graph. They also complicate the Drizzle ORM integration since recursive CTEs require raw SQL.
 
-**Do this instead:** Add indexes on (ticker), (holder_id, period), (stock_id, period, shares DESC), use EXPLAIN ANALYZE to verify query plans.
+**Do this instead:** Two simple SELECT queries (nodes + edges) joined in the service layer. Add recursion only if the scope expands to model company-owns-company relationships.
 
-### Anti-Pattern 5: No Input Validation
-
-**What people do:** Trust user input, pass directly to database.
-
-**Why it's wrong:**
-- Security risk (SQL injection, even with ORM)
-- Invalid data causes errors
-- Poor error messages
-
-**Do this instead:** Use Zod schemas at API route boundaries, validate before processing, return helpful error messages.
+---
 
 ## Integration Points
 
@@ -524,66 +402,87 @@ React Query refetch with new params
 
 | Service | Integration Pattern | Notes |
 |---------|---------------------|-------|
-| **Vercel Postgres (Neon)** | Prisma ORM with connection pooling | Serverless-friendly, auto-scaling |
-| **Vercel Blob (S3)** | Upload PDF on admin route, store metadata in DB | Simple, no separate S3 setup needed |
-| **Vercel KV (Redis)** | Cache common queries (热门 stocks, top holders) | Optional, add when needed |
+| Neon PostgreSQL | `neon-http` driver via `@neondatabase/serverless` | Already in use. No driver change needed for new tables. |
+| Drizzle ORM | Schema-first: add tables to schema.ts, run generate | Use `db.execute(sql\`...\`)` for pg_trgm queries |
+| Vercel Edge Functions | No change | Graph endpoint may need `maxDuration` if the graph is large |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| **Client ↔ API** | HTTP (fetch) via React Query | Standard REST, consider GraphQL if complex queries grow |
-| **API ↔ Service** | Direct function calls | In-process, can move to microservices later if needed |
-| **Service ↔ Repository** | Direct function calls | Repository pattern enables easy DB swapping |
-| **PDF Extraction ↔ Database** | Transactional writes | Ensure data consistency, rollback on validation failure |
+| Import pipeline → person grouping | None (import does not touch persons/person_holders) | Person grouping is purely editorial, post-import |
+| Person service → Holder repository | Direct Drizzle query | HolderService.fuzzySearch() is stateless; no shared state |
+| Graph service → DB | Two raw SQL queries merged in service layer | Keep graph query logic in service, not in route handler |
 
-## Build Order Recommendations
+---
 
-Based on dependencies and complexity:
+## Build Order (Dependency-Aware)
 
-1. **Phase 1: Core Data Model**
-   - Set up PostgreSQL with Prisma/Drizzle
-   - Define schema (stocks, holders, ownership, periods)
-   - Create seed data for testing
-   - **Rationale:** Everything depends on data structure
+The milestone has five deliverables with hard dependencies:
 
-2. **Phase 2: PDF Extraction MVP**
-   - Build PDF parser for single stock
-   - Create extraction service
-   - Admin upload interface
-   - **Rationale:** Need data before visualization
+```
+Step 1: Schema migration
+  → Create persons + person_holders tables
+  → Enable pg_trgm + GIN index on holders
+  → Must be FIRST — everything else depends on it
 
-3. **Phase 3: Basic API**
-   - Stock list API
-   - Stock detail API (latest period only)
-   - Search/filter APIs
-   - **Rationale:** Enable frontend development
+Step 2: Fix PDF parsing (holder name truncation)
+  → Independent of entity linking tables
+  → Should be SECOND — fixes dirty data before grouping is done
+  → If done after grouping, some aliases may already be wrong names
 
-4. **Phase 4: Frontend - Stock View**
-   - Stock list page
-   - Stock detail page
-   - Ownership table (single period)
-   - **Rationale:** Core user value, validates data model
+Step 3: Person + Holder management API + admin UI
+  → Depends on Step 1 (tables exist)
+  → Fuzzy search endpoint uses pg_trgm from Step 1
+  → Can start in parallel with Step 2
 
-5. **Phase 5: Historical Analysis**
-   - Period comparison queries
-   - Holder portfolio APIs
-   - Accumulation/disposal detection
-   - **Rationale:** Advanced features after core works
+Step 4: Aggregate ownership view
+  → Depends on Step 3 (persons must exist to aggregate)
+  → Simple GROUP BY query added to existing emiten/holder pages
 
-6. **Phase 6: Frontend - Advanced Views**
-   - Historical charts
-   - Holder portfolio pages
-   - Advanced filters
-   - **Rationale:** Polish and advanced features
+Step 5: Graph visualization
+  → Depends on Step 4 (needs persons linked to meaningful data)
+  → Most complex frontend work; keep for last
+```
+
+Summary table:
+
+| Step | Deliverable | Depends On | Blocks |
+|------|-------------|------------|--------|
+| 1 | Schema migration | — | 3, 4, 5 |
+| 2 | PDF parsing fix | — | data quality for 3+ |
+| 3 | Person/holder management | 1 | 4, 5 |
+| 4 | Aggregate view | 3 | 5 |
+| 5 | Graph visualization | 4 | — |
+
+---
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| Current (< 5K holders, < 500 persons) | Read-time aggregation, GIN index, no caching needed |
+| 10K–50K holders | GIN index still sufficient; consider pg_trgm threshold tuning |
+| Graph with 1K+ persons | Add pagination/filtering to graph endpoint; full graph render will be slow in browser |
+| Graph with company-owns-company | Add recursive CTE or consider Apache AGE extension; out of current scope |
+
+### Scaling Priorities
+
+1. **First bottleneck:** Browser rendering of graph with >200 nodes. Fix with server-side filtering (show only top N persons by total ownership, or filter by emiten).
+2. **Second bottleneck:** Aggregate query at high holder count. Fix with a materialized view refreshed on import completion.
+
+---
 
 ## Sources
 
-- Next.js App Router Documentation: https://nextjs.org/docs/app
-- Prisma Best Practices: https://www.prisma.io/docs/guides/performance-and-optimization
-- React Query Documentation: https://tanstack.com/query/latest
-- Vercel Postgres: https://vercel.com/docs/storage/vercel-postgres
+- Neon pg_trgm docs (HIGH confidence): https://neon.com/docs/extensions/pg_trgm
+- Drizzle custom migrations (HIGH confidence): https://orm.drizzle.team/docs/kit-custom-migrations
+- Drizzle migrations with Neon (HIGH confidence): https://neon.com/docs/guides/drizzle-migrations
+- Neon graph DB guide (MEDIUM confidence): https://neon.com/guides/graph-db
+- Postgres graph queries with CTE (MEDIUM confidence): https://www.sheshbabu.com/posts/graph-retrieval-using-postgres-recursive-ctes/
+- Many-to-many junction table pattern (HIGH confidence — standard SQL): https://www.beekeeperstudio.io/blog/many-to-many-database-relationships-complete-guide
 
 ---
-*Architecture research for: IDX Ownership Visualizer*
-*Researched: 2025-03-14*
+
+*Architecture research for: IDX Ownership Visualizer v1.1 — Entity Linking & Graph*
+*Researched: 2026-03-15*

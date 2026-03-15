@@ -70,5 +70,16 @@ Tanpa tools ini, user harus download dan scan PDF manual dari website IDX setiap
 | Full History Storage | Enable historical comparison dan trend analysis | — Pending |
 | Public Access | Simplify development, maximize reach | — Pending |
 
+## Current Milestone: v1.1 Lineage & Entity Linking
+
+**Goal:** Memungkinkan user menelusuri kepemilikan berdasarkan orang/entitas — bukan hanya nama holder individual, tapi grup entitas yang terhubung ke satu orang nyata.
+
+**Target features:**
+- Fix parsing nama holder (nama kepotong di PDF extraction)
+- Fuzzy/partial search yang cerdas di seluruh holder
+- Entity grouping: manual tagging alias → satu "orang"
+- Aggregate view: total kepemilikan gabungan per emiten
+- Network visual: grafik hubungan holder ↔ emiten
+
 ---
-*Last updated: 2025-03-14 after initialization*
+*Last updated: 2026-03-15 after milestone v1.1 start*

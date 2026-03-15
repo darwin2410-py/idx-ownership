@@ -1,190 +1,221 @@
 # Technology Stack
 
-**Project:** IDX Ownership Visualizer
-**Researched:** 2025-03-14
-**Overall Confidence:** MEDIUM (WebSearch unavailable - based on training data, verify with official docs before implementing)
+**Project:** IDX Ownership Visualizer — v1.1 Lineage & Entity Linking
+**Researched:** 2026-03-15
+**Confidence:** HIGH (verified via npm registry, official docs, Neon docs)
 
-## Recommended Stack
+---
 
-### Core Framework
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| **Next.js** | 15.x | React framework with App Router | Native Vercel deployment, excellent SEO for public site, Server Components for performance, built-in API routes for PDF processing |
-| **React** | 19.x | UI library | Required peer dependency for Next.js 15, latest Server Components support |
-| **TypeScript** | 5.x | Type safety | Catches data transformation bugs, essential for complex PDF parsing logic, better DX for large codebase |
+## Context: What Exists vs What's New
 
-### Database & Storage
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| **Vercel Postgres** | Latest (via `@vercel/postgres`) | Serverless PostgreSQL | Native Vercel integration, auto-scaling, no server management, perfect for monthly update pattern, free tier available |
-| **Drizzle ORM** | 0.33+ | Database query builder | Type-safe queries, excellent TypeScript support, smaller bundle than Prisma, great for serverless edge functions |
+The base stack is already validated and deployed:
+Next.js 15 + React 19 + TypeScript, Neon PostgreSQL + Drizzle ORM (`^0.36.0`),
+TanStack Table `^8.21.3`, Tailwind CSS.
 
-### Data Visualization
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| **Recharts** | 2.x | Charting library | Declarative API, built on D3.js, SSR-compatible (critical for Next.js), excellent TypeScript support, composable components |
-| **TanStack Table** | 8.x (React Table v8) | Data tables with pagination/sorting | Headless architecture (full styling control), server-side pagination support, excellent filtering/sorting, framework-agnostic |
+This document covers **only the new additions** for milestone v1.1.
 
-### PDF Extraction
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| **pdf-parse** | 1.1.x | PDF text extraction | Lightweight, simple API, works in Node.js (API routes), extracts text + metadata, minimal dependencies |
-| **zod** | 3.x | Schema validation | Validate extracted PDF data before DB insertion, catch malformed data early, TypeScript inference |
+---
 
-### UI Components
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| **Tailwind CSS** | 3.x | Utility-first styling | Zero runtime, small bundle, excellent Vercel integration, rapid prototyping |
-| **shadcn/ui** | Latest | Component library | Copy-paste components (not npm bloat), built on Radix UI primitives, Tailwind-styled, excellent accessibility |
+## Recommended Stack for v1.1 Features
 
-### Supporting Libraries
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| **date-fns** | 3.x | Date manipulation | Format monthly report dates, calculate historical periods, tree-shakeable (smaller than Moment.js) |
-| **clsx** | 2.x | Conditional class names | Combine Tailwind classes conditionally, standard pattern in Next.js apps |
-| **@tanstack/react-query** | 5.x | Server state management | Cache historical data queries, automatic refetching, optimistic UI (if needed later) |
-| **next-themes** | 0.3+ | Dark mode support | If adding dark mode later, handles theme switching in Next.js App Router |
+### Fuzzy Search
 
-## Alternatives Considered
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **pg_trgm** (PostgreSQL extension) | Built into Postgres 16 | Server-side trigram fuzzy search on `holders.canonical_name` | Zero extra dependency, GIN index gives ~60-80ms on large tables, lives in same Neon DB already in use — no separate search service |
+| **Drizzle `sql` template tag** | (existing `drizzle-orm ^0.36.0`) | Execute raw `similarity()` queries from pg_trgm | Drizzle exposes `sql\`\`` for arbitrary SQL; no additional package needed |
 
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| **Charts** | Recharts | Chart.js (react-chartjs-2) | Canvas rendering (not SSR-friendly), larger bundle, less declarative API |
-| **Charts** | Recharts | Nivo | Server-side rendering is great but library is less maintained, Recharts has larger community |
-| **Tables** | TanStack Table | MUI DataGrid | Not headless (forced Material Design look), heavy bundle size, harder to customize |
-| **Tables** | TanStack Table | React-Table v7 | Deprecated, migrate to v8 (TanStack Table) |
-| **Database** | Vercel Postgres | Supabase | Overkill for read-heavy public site, adds auth complexity we don't need, Vercel integration simpler |
-| **Database** | Vercel Postgres | PlanetScale | MySQL-based, Postgres more standard for analytics, Vercel Postgres has better free tier |
-| **ORM** | Drizzle | Prisma | Prisma 5+ has improved but still larger bundle, Drizzle better for serverless edge, more SQL control |
-| **PDF** | pdf-parse | pdf.js | Overkill for simple text extraction, larger bundle, more complex API, pdf-parse sufficient for tables |
-| **PDF** | pdf-parse | pdf2json | JSON output is over-engineered for our needs, text extraction simpler with pdf-parse |
-| **UI** | shadcn/ui | Chakra UI | Full component library (larger bundle), shadcn is copy-paste (tree-shakeable), more flexibility |
+**Why pg_trgm over Fuse.js for this app:**
+- 5000+ holder names live in Postgres — loading them all to the client just to run Fuse.js wastes bandwidth and breaks on mobile.
+- pg_trgm with a GIN index is indexed fuzzy search: query time stays constant as holder count grows.
+- Neon supports pg_trgm natively. Enable with one SQL statement, no extra configuration.
+- Fuse.js (7.1.0) is the right choice if data must be client-only (no DB). That is not the case here.
 
-## What NOT to Use
+**Enable in Neon:**
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX holders_canonical_name_trgm_idx
+  ON holders USING GIN (canonical_name gin_trgm_ops);
+```
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| **Next.js Pages Router** | Legacy, App Router is the future (since Next.js 13), better Server Components support | App Router (`app/` directory) |
-| **Material-UI (MUI)** | Heavy bundle size (~300KB gzipped), forced styling system, hard to customize with Tailwind | shadcn/ui + Tailwind |
-| **Moment.js** | Deprecated, huge bundle (~70KB), mutable API | date-fns (tree-shakeable) |
-| **React-Table v7** | Deprecated in 2022, renamed to TanStack Table v8 | TanStack Table v8 |
-| **jQuery** | Completely unnecessary in React ecosystem, DOM manipulation anti-pattern | React state + refs (rarely needed) |
-| **Express.js** | Don't need separate server, Next.js API routes handle everything | Next.js Route Handlers (`app/api/*`) |
-| **AWS S3 direct** | Overkill for PDF storage, Vercel Blob storage simpler if needed | Vercel Blob (or just store parsed data in Postgres) |
-| **Client-side PDF parsing** | Exposes parsing logic, slower on mobile devices | Server-side in Next.js API route |
-| **localStorage for history** | Limited to 5-10MB, not shareable across devices, hard to sync | Server-side Postgres storage |
+**Query pattern with Drizzle:**
+```typescript
+import { sql } from 'drizzle-orm';
+
+const results = await db.execute(
+  sql`SELECT id, canonical_name, original_name
+      FROM holders
+      WHERE similarity(canonical_name, ${query}) > 0.2
+      ORDER BY similarity(canonical_name, ${query}) DESC
+      LIMIT 20`
+);
+```
+Default threshold is 0.3. Use 0.2 for partial names (IDX holder names are often truncated in PDFs — this matters).
+
+---
+
+### Network Graph Visualization
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **@xyflow/react** | `^12.10.1` | Interactive holder ↔ emiten network graph | React-native (no DOM conflicts), peer dep `react >= 17` confirmed compatible with React 19, viewport culling for performance, pan/zoom built-in, MIT license |
+
+**Why @xyflow/react over alternatives:**
+
+- **vs D3-force:** D3 directly mutates the DOM, which conflicts with React's reconciler. Correct D3+React integration requires `useRef` + `useEffect` and careful synchronization — 200-300 lines of plumbing for what @xyflow/react provides out of the box. Not worth it for a CRUD app.
+- **vs Cytoscape.js / react-cytoscapejs:** `react-cytoscapejs` (v2.0.0) wraps a Canvas/WebGL renderer. Excellent for 10,000+ node graphs. For the holder ↔ emiten use case (expected max: ~50-200 nodes per focused view), the overhead is unjustified. Also, the official Plotly React wrapper (`react-cytoscapejs`) shows limited React 19 testing evidence.
+- **vs vis-network (v10.0.2):** No maintained React wrapper. The closest wrappers (`vis-react`, `react-vis-network-graph`) are 5-8 years old and unmaintained. Requires raw `useRef`/`useEffect` integration with an imperative API — same DOM-conflict problem as D3.
+
+**@xyflow/react confirmed compatibility:**
+- Peer deps: `react >= 17`, `react-dom >= 17` — confirmed via `npm info @xyflow/react peerDependencies`
+- Internal deps: `zustand ^4.4.0`, `classcat ^5.0.3` — no conflicts with existing stack
+- Next.js App Router: requires `'use client'` directive (expected — graph is interactive)
+
+**Important:** Import CSS in the client component:
+```typescript
+import '@xyflow/react/dist/style.css';
+```
+
+---
+
+### Entity Grouping UI (Manual Alias Tagging)
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **cmdk** | `^1.1.1` | Command-palette-style search-and-select for linking holders to entities | Powers shadcn's `<Command>` component, battle-tested fuzzy search, keyboard-navigable, zero external deps |
+| **shadcn/ui `<Command>` + `<Combobox>`** | (copy-paste, no npm version) | Multi-select holder search UI for building entity groups | Already the UI pattern in the project; combobox variant supports creatable items ("create new entity") and multi-select tagging |
+
+**Entity grouping is a UI pattern, not a library.** The implementation is:
+1. A `entities` table in Postgres: `{ id, display_name, created_at }`
+2. A `holder_entity_links` join table: `{ holder_id, entity_id }` (many-to-many)
+3. A shadcn `<Command>` combobox that searches existing entities (pg_trgm again) and creates new ones inline
+4. Aggregate queries: `GROUP BY entity_id` across `holder_entity_links` → `ownership_records`
+
+No additional npm package is needed beyond what shadcn copy-pastes (which uses cmdk internally).
+
+---
+
+### Aggregate Ownership Calculation
+
+No new library needed. This is a SQL query:
+
+```sql
+SELECT
+  e.display_name AS entity_name,
+  o.emiten_id,
+  SUM(o.shares_owned) AS total_shares,
+  SUM(o.ownership_percentage) AS total_pct
+FROM ownership_records o
+JOIN holder_entity_links hel ON hel.holder_id = o.holder_id
+JOIN entities e ON e.id = hel.entity_id
+WHERE o.period_id = $1
+GROUP BY e.id, e.display_name, o.emiten_id
+ORDER BY total_pct DESC;
+```
+
+Drizzle can express this with its query builder or `sql` template. No additional library.
+
+---
 
 ## Installation
 
 ```bash
-# Initialize Next.js project
-npx create-next-app@latest idx-ownership --typescript --tailwind --app --no-src-dir --import-alias "@/*"
+# Fuzzy search — no npm package, only SQL
+# Run in Neon SQL Editor or migration:
+# CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-# Core dependencies
-npm install next@latest react@latest react-dom@latest
+# Network graph
+npm install @xyflow/react
 
-# Database & ORM
-npm install @vercel/postgres drizzle-orm
-
-# PDF extraction & validation
-npm install pdf-parse zod
-
-# Data visualization
-npm install recharts @tanstack/react-table
-
-# Server state (if needed for caching)
-npm install @tanstack/react-query
-
-# Utilities
-npm install date-fns clsx tailwind-merge
-
-# Dev dependencies
-npm install -D @types/node @types/react @types/react-dom drizzle-kit
+# Entity grouping UI — cmdk is a transitive dep if shadcn Command is already present
+# If not yet added:
+npm install cmdk
+# Or use shadcn CLI:
+npx shadcn@latest add command combobox
 ```
 
-```bash
-# shadcn/ui initialization (after project creation)
-npx shadcn-ui@latest init
-npx shadcn-ui@latest add button table card input select
-```
+---
+
+## Supporting Libraries
+
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| **fuse.js** | `^7.1.0` | Client-side fuzzy search | Only if doing instant-filter on data already loaded in the browser (e.g., filtering a 200-row table already rendered). Do NOT use as the primary holder search — that belongs in pg_trgm. |
+| **d3-force** | `^3.0.0` | Force simulation for @xyflow/react custom layouts | Only if the default @xyflow/react auto-layout is insufficient and you need physics-based node positioning. Use as a layout algorithm, not for rendering. |
+
+---
+
+## Alternatives Considered
+
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| pg_trgm (server-side) | fuse.js (client-side) | When all data is already client-side and no DB is available. Not this app. |
+| @xyflow/react | cytoscape.js | When node count exceeds 1000+ per view and WebGL rendering is required. Not this use case. |
+| @xyflow/react | D3-force (direct) | When you need a fully custom renderer and have a dedicated frontend engineer for React/D3 synchronization. Not justified here. |
+| pg_trgm | Meilisearch / Algolia | When full-text search across millions of documents is needed with typo correction, faceting, etc. Massive overkill for 5000 holder names. |
+| cmdk + shadcn | react-select | react-select (5.x) is fine but adds ~35KB. cmdk is already present via shadcn and handles the same pattern with better keyboard UX. |
+
+---
+
+## What NOT to Add
+
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| **Meilisearch / Elasticsearch** | Requires a separate server process, separate deployment, separate maintenance. Completely overkill for 5000 holders. | pg_trgm — same DB, zero additional infrastructure |
+| **vis-network** | React wrappers are unmaintained (last updated 5-8 years ago). Direct integration requires imperative DOM manipulation that fights React. | @xyflow/react |
+| **cytoscape.js** for this scale | 150KB+ bundle, Canvas rendering doesn't integrate with React's update model, overkill for < 200 node graphs. | @xyflow/react (SVG-based, React-native) |
+| **Full D3 (d3 v7)** | 500KB+ bundle, entire library rarely needed. DOM mutation model conflicts with React. | Use only `d3-force` (5KB) if custom layout is needed for @xyflow/react |
+| **Fuse.js as primary search** | Requires loading all 5000+ holder names to the client on every page load. Breaks on slow mobile connections. Does not scale. | pg_trgm server-side query |
+| **A dedicated "entity resolution" library** | Libraries like `dedupe.js` or `zingg` are ML-based record linkage systems for millions of records. Manual alias tagging with a combobox is the right UX for this domain. | cmdk combobox + join table |
+
+---
 
 ## Stack Patterns by Variant
 
-**If PDFs have complex tables (multi-line, merged cells):**
-- Use **pdf2json** instead of pdf-parse
-- Because pdf-parse only extracts text, pdf2json preserves table structure
-- Tradeoff: Larger bundle, more complex parsing logic
+**If holder name quality is poor (many truncated names from PDF):**
+- Lower pg_trgm threshold to 0.15 instead of 0.2
+- Also add `ILIKE '%' || $query || '%'` as a fallback in the same query (union results)
+- Because trigrams need at least 3 characters; very short partial names fall below the trigram threshold
 
-**If data grows beyond 100K records:**
-- Add **server-side pagination** with TanStack Table
-- Because client-side pagination will slow down the browser
-- Implementation: Pass page/sort params to API route, query with LIMIT/OFFSET
+**If the network graph becomes slow (100+ nodes):**
+- Add `d3-force ^3.0.0` as a layout plugin for @xyflow/react
+- Run force simulation once on data load, then freeze positions (no continuous simulation)
+- Because physics simulation on every frame is expensive; precomputing positions is free
 
-**If adding real-time updates (future):**
-- Add **Vercel Postgres Change Data Capture** or **Supabase Realtime**
-- Because current design is monthly manual updates, real-time requires different architecture
-- Tradeoff: Increased complexity, WebSocket connections
+**If entity grouping needs audit trail:**
+- Add `created_by` and `created_at` columns to `holder_entity_links`
+- No extra library — just schema columns
+- Because public site without auth still benefits from knowing when links were created
 
-**If hosting outside Vercel:**
-- Use **Docker + PostgreSQL** instead of Vercel Postgres
-- Because Vercel Postgres is Vercel-specific
-- Alternative: Neon (serverless Postgres, works anywhere)
-
-**If PDF extraction fails frequently:**
-- Add **PDF.js** as fallback
-- Because pdf-parse is simple, PDF.js handles more edge cases
-- Tradeoff: Larger bundle, more maintenance
+---
 
 ## Version Compatibility
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| Next.js 15.x | React 19.x | Next.js 15 requires React 19 |
-| Next.js 15.x | TypeScript 5.x | Recommended, uses latest TS features |
-| Recharts 2.x | React 18+ | Compatible with Server Components (use `'use client'` for charts) |
-| TanStack Table 8.x | React 18+ | Works with Server Components (use client directive) |
-| Drizzle 0.33+ | Node.js 18+ | Requires Node 18+ (Vercel runtime) |
-| pdf-parse 1.1.x | Node.js 14+ | Works in API routes (Node.js environment) |
-| @vercel/postgres | Vercel Edge Runtime | Uses Postgres.js wire protocol, not node-postgres |
+| `@xyflow/react ^12.10.1` | `react >= 17`, `react-dom >= 17` | Confirmed via `npm info`. React 19 compatible. |
+| `@xyflow/react ^12.10.1` | `zustand ^4.4.0` | Zustand is a transitive dep — will be auto-installed, no conflict with app code unless app also pins zustand at a different major |
+| `cmdk ^1.1.1` | React 18+, React 19 compatible | Used internally by shadcn, actively maintained by Paco Coursey |
+| `pg_trgm` | Neon Postgres (all tiers) | pg_trgm is a bundled Postgres extension, supported on all Neon tiers per Neon docs |
+| `drizzle-orm ^0.36.0` | `sql` template tag for raw pg_trgm queries | No version bump needed — `sql` tag ships with drizzle-orm |
 
-## Architecture Notes
-
-### Data Flow
-```
-PDF Upload (admin) → API Route (app/api/parse-pdf) → pdf-parse extraction →
-Zod validation → Drizzle ORM → Vercel Postgres
-                                              ↓
-User Visit → Server Component (app/page.tsx) → Drizzle query →
-React render → Recharts charts + TanStack Table
-```
-
-### Why Server Components Matter
-- **Performance**: Database queries run on server, no client-side JSON payload
-- **Security**: PDF parsing logic stays server-side (not exposed in browser bundle)
-- **Bundle size**: Recharts/TanStack Table only load in client components where needed
-
-### Client vs Server Component Strategy
-- **Server Components**: Data fetching (Drizzle queries), static layout
-- **Client Components**: Interactive tables (TanStack Table), charts (Recharts), search/filter UI
+---
 
 ## Sources
 
-**Confidence: MEDIUM** - WebSearch tools were rate-limited during research. Recommendations based on training data (cutoff June 2024). **Verify with official docs before implementing:**
-
-- **Next.js**: https://nextjs.org/docs (verify App Router patterns, Server Components)
-- **Vercel Postgres**: https://vercel.com/docs/storage/vercel-postgres (verify free tier limits, connection patterns)
-- **TanStack Table**: https://tanstack.com/table/latest/docs/introduction (verify v8 API, pagination examples)
-- **Recharts**: https://recharts.org/en-US/ (verify SSR compatibility, latest API)
-- **Drizzle ORM**: https://orm.drizzle.team/docs/overview (verify serverless best practices)
-- **pdf-parse**: https://www.npmjs.com/package/pdf-parse (verify API, table extraction capabilities)
-- **shadcn/ui**: https://ui.shadcn.com/ (verify installation steps, component list)
-
-**Action required before Phase 1:**
-- [ ] Verify Next.js 15 current version and App Router best practices
-- [ ] Test pdf-parse on sample IDX PDF to ensure table extraction works
-- [ ] Confirm Vercel Postgres free tier supports expected data volume
-- [ ] Validate Recharts SSR patterns with Next.js 15 Server Components
+- `npm info @xyflow/react peerDependencies` — `{ react: '>=17', 'react-dom': '>=17' }` — HIGH confidence
+- `npm info @xyflow/react version` → `12.10.1` — HIGH confidence
+- `npm info fuse.js version` → `7.1.0` — HIGH confidence
+- `npm info cmdk version` → `1.1.1` — HIGH confidence
+- `npm info cytoscape version` → `3.33.1` — HIGH confidence
+- `npm info vis-network version` → `10.0.2` — HIGH confidence
+- [Neon pg_trgm docs](https://neon.com/docs/extensions/pg_trgm) — pg_trgm supported natively, enable with `CREATE EXTENSION` — HIGH confidence
+- [PostgreSQL pg_trgm docs](https://www.postgresql.org/docs/current/pgtrgm.html) — GIN index, similarity threshold 0.3 default — HIGH confidence
+- [React Flow 12 release](https://xyflow.com/blog/react-flow-12-release) — renamed to @xyflow/react, React 19 compatible — MEDIUM confidence (no explicit React 19 callout but peer dep range confirms)
+- [npmtrends: fuse.js vs flexsearch](https://npmtrends.com/fast-fuzzy-vs-flexsearch-vs-fuse.js-vs-fuzzy-vs-lunr-vs-search-index) — fuse.js ~3.5M weekly downloads, flexsearch ~388K — MEDIUM confidence (WebSearch)
+- [vis-network npm](https://www.npmjs.com/package/vis-network) — latest 10.0.2, React wrappers last updated 5-8 years ago — MEDIUM confidence
 
 ---
-*Stack research for: IDX Ownership Visualizer*
-*Researched: 2025-03-14*
+
+*Stack research for: IDX Ownership Visualizer v1.1 — Fuzzy Search, Entity Grouping, Network Graph*
+*Researched: 2026-03-15*

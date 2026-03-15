@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-last_updated: "2026-03-15T01:04:06.768Z"
+milestone: v1.1
+milestone_name: lineage-entity-linking
+status: active
+last_updated: "2026-03-15T00:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 5
@@ -188,6 +188,10 @@ Phase 4 complete! All core features implemented. Ready for deployment and testin
 ---
 
 ## Accumulated Context
+
+### Pending Todos
+**1 todo pending:**
+- `fix-deployment-protection-and-import-initial-data` - Deployment protection blocking access, database empty
 
 ### Key Decisions Made
 
