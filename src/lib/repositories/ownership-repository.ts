@@ -952,3 +952,324 @@ export async function getAllPeriods(): Promise<Period[]> {
     .from(schema.periods)
     .orderBy(desc(schema.periods.year), desc(schema.periods.month));
 }
+
+/**
+ * Get top accumulators for a period
+ * Returns holders with biggest ownership increases compared to previous period
+ */
+export async function getTopAccumulators(
+  periodId: string,
+  limit: number = 20
+): Promise<{
+  holderName: string;
+  stockCode: string;
+  stockName: string;
+  currentPercentage: string;
+  previousPercentage: string | null;
+  changePercentage: number;
+}[]> {
+  // Get previous period
+  const previousPeriod = await getPreviousPeriod(periodId);
+  if (!previousPeriod) {
+    return []; // No comparison available
+  }
+
+  // Get current and previous period data
+  const currentData = await db
+    .select({
+      holderName: schema.holders.canonicalName,
+      stockCode: schema.emiten.id,
+      stockName: schema.emiten.name,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(schema.holders, eq(schema.holders.id, schema.ownershipRecords.holderId))
+    .innerJoin(schema.emiten, eq(schema.emiten.id, schema.ownershipRecords.emitenId))
+    .where(eq(schema.ownershipRecords.periodId, periodId));
+
+  const previousData = await db
+    .select({
+      holderName: schema.holders.canonicalName,
+      stockCode: schema.emiten.id,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(schema.holders, eq(schema.holders.id, schema.ownershipRecords.holderId))
+    .innerJoin(schema.emiten, eq(schema.emiten.id, schema.ownershipRecords.emitenId))
+    .where(eq(schema.ownershipRecords.periodId, previousPeriod.id));
+
+  // Build maps for efficient lookup
+  const currentMap = new Map<string, typeof currentData[0]>();
+  for (const row of currentData) {
+    const key = `${row.holderName}-${row.stockCode}`;
+    currentMap.set(key, row);
+  }
+
+  const previousMap = new Map<string, { percentage: string }>();
+  for (const row of previousData) {
+    const key = `${row.holderName}-${row.stockCode}`;
+    previousMap.set(key, row);
+  }
+
+  // Calculate changes
+  const accumulators: Array<{
+    holderName: string;
+    stockCode: string;
+    stockName: string;
+    currentPercentage: string;
+    previousPercentage: string | null;
+    changePercentage: number;
+  }> = [];
+
+  for (const [key, current] of currentMap) {
+    const previous = previousMap.get(key);
+    const currentPct = parseFloat(current.percentage);
+    const previousPct = previous ? parseFloat(previous.percentage) : 0;
+    const changePct = currentPct - previousPct;
+
+    // Only include accumulations (positive change)
+    if (changePct > 0.01) { // More than 0.01% change
+      accumulators.push({
+        holderName: current.holderName,
+        stockCode: current.stockCode,
+        stockName: current.stockName,
+        currentPercentage: current.percentage,
+        previousPercentage: previous ? previous.percentage : null,
+        changePercentage: changePct,
+      });
+    }
+  }
+
+  // Sort by change percentage descending and limit
+  return accumulators
+    .sort((a, b) => b.changePercentage - a.changePercentage)
+    .slice(0, limit);
+}
+
+/**
+ * Get top disposals for a period
+ * Returns holders with biggest ownership decreases compared to previous period
+ */
+export async function getTopDisposals(
+  periodId: string,
+  limit: number = 20
+): Promise<{
+  holderName: string;
+  stockCode: string;
+  stockName: string;
+  currentPercentage: string;
+  previousPercentage: string;
+  changePercentage: number;
+}[]> {
+  // Get previous period
+  const previousPeriod = await getPreviousPeriod(periodId);
+  if (!previousPeriod) {
+    return []; // No comparison available
+  }
+
+  // Get current and previous period data
+  const currentData = await db
+    .select({
+      holderName: schema.holders.canonicalName,
+      stockCode: schema.emiten.id,
+      stockName: schema.emiten.name,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(schema.holders, eq(schema.holders.id, schema.ownershipRecords.holderId))
+    .innerJoin(schema.emiten, eq(schema.emiten.id, schema.ownershipRecords.emitenId))
+    .where(eq(schema.ownershipRecords.periodId, periodId));
+
+  const previousData = await db
+    .select({
+      holderName: schema.holders.canonicalName,
+      stockCode: schema.emiten.id,
+      stockName: schema.emiten.name,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(schema.holders, eq(schema.holders.id, schema.ownershipRecords.holderId))
+    .innerJoin(schema.emiten, eq(schema.emiten.id, schema.ownershipRecords.emitenId))
+    .where(eq(schema.ownershipRecords.periodId, previousPeriod.id));
+
+  // Build maps
+  const currentMap = new Map<string, typeof currentData[0]>();
+  for (const row of currentData) {
+    const key = `${row.holderName}-${row.stockCode}`;
+    currentMap.set(key, row);
+  }
+
+  const previousMap = new Map<string, typeof previousData[0]>();
+  for (const row of previousData) {
+    const key = `${row.holderName}-${row.stockCode}`;
+    previousMap.set(key, row);
+  }
+
+  // Calculate changes (include holders who exited too)
+  const disposals: Array<{
+    holderName: string;
+    stockCode: string;
+    stockName: string;
+    currentPercentage: string;
+    previousPercentage: string;
+    changePercentage: number;
+  }> = [];
+
+  // Check all previous holders for disposals
+  for (const [key, previous] of previousMap) {
+    const current = currentMap.get(key);
+    const previousPct = parseFloat(previous.percentage);
+    const currentPct = current ? parseFloat(current.percentage) : 0;
+    const changePct = currentPct - previousPct;
+
+    // Include all disposals (negative change or exited)
+    if (changePct < -0.01) {
+      disposals.push({
+        holderName: previous.holderName,
+        stockCode: previous.stockCode,
+        stockName: current?.stockName || previous.stockName,
+        currentPercentage: current ? current.percentage : '0.00',
+        previousPercentage: previous.percentage,
+        changePercentage: changePct,
+      });
+    }
+  }
+
+  // Sort by change percentage ascending (most negative first) and limit
+  return disposals
+    .sort((a, b) => a.changePercentage - b.changePercentage)
+    .slice(0, limit);
+}
+
+/**
+ * Get most active stocks for a period
+ * Returns stocks with most ownership changes compared to previous period
+ */
+export async function getMostActiveStocks(
+  periodId: string,
+  limit: number = 20
+): Promise<{
+  stockCode: string;
+  stockName: string;
+  totalChange: number;
+  newHolders: number;
+  exitedHolders: number;
+  churnedHolders: number;
+}[]> {
+  // Get previous period
+  const previousPeriod = await getPreviousPeriod(periodId);
+  if (!previousPeriod) {
+    return []; // No comparison available
+  }
+
+  // Get current and previous period data
+  const currentData = await db
+    .select({
+      stockCode: schema.emiten.id,
+      stockName: schema.emiten.name,
+      holderId: schema.ownershipRecords.holderId,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(schema.emiten, eq(schema.emiten.id, schema.ownershipRecords.emitenId))
+    .where(eq(schema.ownershipRecords.periodId, periodId));
+
+  const previousData = await db
+    .select({
+      stockCode: schema.emiten.id,
+      holderId: schema.ownershipRecords.holderId,
+      percentage: schema.ownershipRecords.ownershipPercentage,
+    })
+    .from(schema.ownershipRecords)
+    .innerJoin(schema.emiten, eq(schema.emiten.id, schema.ownershipRecords.emitenId))
+    .where(eq(schema.ownershipRecords.periodId, previousPeriod.id));
+
+  // Build maps: stock -> Map of holder IDs to percentages
+  const currentHolders = new Map<string, Map<number, string>>();
+  for (const row of currentData) {
+    if (!currentHolders.has(row.stockCode)) {
+      currentHolders.set(row.stockCode, new Map());
+    }
+    currentHolders.get(row.stockCode)!.set(row.holderId, row.percentage);
+  }
+
+  const previousHolders = new Map<string, Map<number, string>>();
+  for (const row of previousData) {
+    if (!previousHolders.has(row.stockCode)) {
+      previousHolders.set(row.stockCode, new Map());
+    }
+    previousHolders.get(row.stockCode)!.set(row.holderId, row.percentage);
+  }
+
+  // Collect all unique stock codes with names
+  const stockNames = new Map<string, string>();
+  for (const row of currentData) {
+    stockNames.set(row.stockCode, row.stockName);
+  }
+  for (const row of previousData) {
+    if (!stockNames.has(row.stockCode)) {
+      // Need to fetch stock name for stocks only in previous period
+      const stockName = currentData.find(d => d.stockCode === row.stockCode)?.stockName;
+      if (stockName) {
+        stockNames.set(row.stockCode, stockName);
+      }
+    }
+  }
+
+  const allStocks = new Set([
+    ...currentData.map(d => d.stockCode),
+    ...previousData.map(d => d.stockCode),
+  ]);
+
+  // Calculate activity metrics for each stock
+  const activeStocks: Array<{
+    stockCode: string;
+    stockName: string;
+    totalChange: number;
+    newHolders: number;
+    exitedHolders: number;
+    churnedHolders: number;
+  }> = [];
+
+  for (const stockCode of allStocks) {
+    const currentMap = currentHolders.get(stockCode) || new Map();
+    const previousMap = previousHolders.get(stockCode) || new Map();
+
+    // New holders: in current but not in previous
+    const newHolders = Array.from(currentMap.keys()).filter(id => !previousMap.has(id)).length;
+
+    // Exited holders: in previous but not in current
+    const exitedHolders = Array.from(previousMap.keys()).filter(id => !currentMap.has(id)).length;
+
+    // Churned holders: common holders who changed percentage
+    let churnedHolders = 0;
+    for (const [holderId, currentPct] of currentMap) {
+      if (previousMap.has(holderId)) {
+        const previousPct = previousMap.get(holderId)!;
+        const change = Math.abs(parseFloat(currentPct) - parseFloat(previousPct));
+        if (change > 0.01) { // More than 0.01% change
+          churnedHolders++;
+        }
+      }
+    }
+
+    // Total change = sum of all changes
+    const totalChange = newHolders + exitedHolders + churnedHolders;
+
+    const stockName = stockNames.get(stockCode) || '';
+
+    activeStocks.push({
+      stockCode,
+      stockName,
+      totalChange,
+      newHolders,
+      exitedHolders,
+      churnedHolders,
+    });
+  }
+
+  // Sort by total change descending and limit
+  return activeStocks
+    .sort((a, b) => b.totalChange - a.totalChange)
+    .slice(0, limit);
+}
