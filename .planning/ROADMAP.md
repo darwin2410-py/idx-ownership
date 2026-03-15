@@ -1,8 +1,8 @@
 # ROADMAP - IDX Ownership Visualizer
 
 **Project:** IDX Ownership Visualizer
-**Version:** 1.0 (MVP)
-**Last Updated:** 2026-03-14
+**Version:** 1.0 (MVP) + 1.1 (Lineage & Entity Linking)
+**Last Updated:** 2026-03-15
 **Granularity:** Standard (5-8 phases expected)
 
 ---
@@ -16,8 +16,12 @@
 | 2.1. Solve Error | 1/1 | Complete | 02.1-01 |
 | 3. User Experience | 3/3 | Complete | 03-01, 03-02, 03-03 |
 | 4. Enhancement Features | 3/3 | Complete | 04-01, 04-02, 04-03 |
+| 5. PDF Fix & Data Quality | 0/0 | Not started | - |
+| 6. Entity Data Model & Management | 0/0 | Not started | - |
+| 7. Aggregate Views | 0/0 | Not started | - |
 
-**Overall Progress:** 15/15 plans complete (100%)
+**v1.0 Progress:** 15/15 plans complete (100%)
+**v1.1 Progress:** 0 plans complete (Not started)
 
 ---
 
@@ -28,6 +32,9 @@
 - [x] **Phase 2.1: Solve Error** - Database connection setup and environment configuration ✅
 - [x] **Phase 3: User Experience** - Responsive mobile layout, loading states, and landing page ✅
 - [x] **Phase 4: Enhancement Features** - Historical comparison, per-holder view, and top movers dashboard ✅
+- [ ] **Phase 5: PDF Fix & Data Quality** - Fix holder name truncation in PDF extractor and re-import clean data
+- [ ] **Phase 6: Entity Data Model & Management** - Schema, API, and admin UI for creating and managing entity groups
+- [ ] **Phase 7: Aggregate Views** - Entity profile page and aggregate ownership display on stock detail pages
 
 ---
 
@@ -160,10 +167,74 @@
 
 ---
 
+### Phase 5: PDF Fix & Data Quality
+
+**Goal:** Holder names in the database are complete and accurate, ready for entity grouping
+
+**Depends on:** Phase 4 (Enhancement Features — v1.0 complete)
+
+**Requirements:** PARSE-01, PARSE-02
+
+**Success Criteria** (what must be TRUE):
+1. Holder names in the database are no longer truncated — "Prajogo Pangestu" appears in full, not as "Prajogo Pange"
+2. All known truncation cases (names with PT, Tbk, and multi-word Indonesian family names) pass spot-check verification
+3. Re-imported data contains at least as many records as before the fix (7209+ ownership records)
+4. No regression in other extracted fields — stock codes, ownership percentages, and share counts remain correct
+5. Import script runs to completion without errors on all available historical PDFs
+
+**Plans:** 2 plans in 2 waves
+
+**Wave 1:**
+- [ ] [05-01-PLAN.md](.planning/phases/05-pdf-fix-and-data-quality/05-01-PLAN.md) — Audit script + fix tryIDXConcatenatedStrategy() holder name truncation bug
+
+**Wave 2:**
+- [ ] [05-02-PLAN.md](.planning/phases/05-pdf-fix-and-data-quality/05-02-PLAN.md) — Clear all data and re-import with fixed extractor, spot-check name quality
+
+---
+
+### Phase 6: Entity Data Model & Management
+
+**Goal:** Users can create named entity groups and link holder aliases to them, with conflict detection preventing double-counting
+
+**Depends on:** Phase 5 (PDF Fix & Data Quality)
+
+**Requirements:** ENTITY-01, ENTITY-02, ENTITY-03
+
+**Success Criteria** (what must be TRUE):
+1. User can create a new named entity (e.g., "Hartono Family") and see it appear in a list of all entities
+2. User can search for holders by partial name (case-insensitive, fuzzy match) and add a holder as an alias of an entity
+3. User receives a clear error message when attempting to add a holder that already belongs to another entity — no silent data corruption
+4. User can remove a holder alias from an entity, and that holder immediately reappears as an independent entry in all views
+5. All existing ownership records and holder data remain intact after any alias add or remove operation
+
+**Plans:** TBD
+
+---
+
+### Phase 7: Aggregate Views
+
+**Goal:** Users can see combined ownership totals for an entity across all its aliases, both on a dedicated entity page and inline on stock detail pages
+
+**Depends on:** Phase 6 (Entity Data Model & Management)
+
+**Requirements:** AGGR-01, AGGR-02
+
+**Success Criteria** (what must be TRUE):
+1. User can navigate to `/entities/[id]` and see a list of all stocks held by that entity, showing combined percentage and combined share count across all aliases
+2. On the entity profile page, user can expand each stock row to see the breakdown of which individual aliases contribute to the total
+3. On `/stocks/[code]`, when multiple holders are aliases of the same entity, a combined entity row appears above the individual alias rows showing the aggregate total percentage
+4. Stocks with no entity grouping display exactly as before — no visual change or regression
+5. User can sort the entity profile page by total ownership percentage to identify the entity's largest positions
+
+**Plans:** TBD
+
+---
+
 ## v2+ Requirements (Future)
 
-Deferred to post-MVP releases:
+Deferred to post-v1.1 releases:
 
+- **[GRAPH-01]** Network Graph Visualization — Visual graph menampilkan hubungan antara entity/holder dan emiten (defer from v1.1; prioritize aggregate view first)
 - **[ANAL-01]** Accumulation/Disposal Detection — Automatically flag significant ownership changes (>5%)
 - **[SECT-01]** Sector Analysis — Aggregate ownership by sector (requires external sector mapping data)
 - **[COMP-01]** Cross-Holder Comparison — Compare holdings between two investors
@@ -175,24 +246,31 @@ Deferred to post-MVP releases:
 
 | Requirement | Phase | Status | Plans |
 |-------------|-------|--------|-------|
-| DATA-01: PDF Extraction Pipeline | Phase 1 | ✅ Complete | 01-02, 01-04 |
-| DATA-02: Database Schema Design | Phase 1 | ✅ Complete | 01-01 |
-| DATA-03: Data Quality Validation | Phase 1 | ✅ Complete | 01-03, 01-04 |
-| EMIT-01: Stock Listing Page | Phase 2 | ✅ Complete | 02-01 |
-| EMIT-02: Stock Detail Page | Phase 2 | ✅ Complete | 02-02 |
-| CORE-01: Sortable Tables | Phase 2 | ✅ Complete | 02-03 |
-| CORE-02: Search & Filter | Phase 2 | ✅ Complete | 02-04 |
-| CORE-03: Data Freshness Indicator | Phase 2 | ✅ Complete | 02-01, 02-02 |
-| CORE-04: Export to CSV | Phase 2 | ✅ Complete | 02-02 |
-| ENV-01: Environment Setup | Phase 2.1 | ✅ Complete | 02.1-01 |
-| UX-01: Responsive Mobile Layout | Phase 3 | ✅ Complete | 03-01 |
-| UX-02: Loading States | Phase 3 | ✅ Complete | 03-02 |
-| UX-03: Landing Page | Phase 3 | ✅ Complete | 03-03 |
-| HIST-01: Historical Comparison | Phase 4 | ✅ Complete | 04-01 |
-| HOLD-01: Per-Holder View | Phase 4 | ✅ Complete | 04-02 |
-| DASH-01: Top Movers Dashboard | Phase 4 | ✅ Complete | 04-03 |
+| DATA-01: PDF Extraction Pipeline | Phase 1 | Complete | 01-02, 01-04 |
+| DATA-02: Database Schema Design | Phase 1 | Complete | 01-01 |
+| DATA-03: Data Quality Validation | Phase 1 | Complete | 01-03, 01-04 |
+| EMIT-01: Stock Listing Page | Phase 2 | Complete | 02-01 |
+| EMIT-02: Stock Detail Page | Phase 2 | Complete | 02-02 |
+| CORE-01: Sortable Tables | Phase 2 | Complete | 02-03 |
+| CORE-02: Search & Filter | Phase 2 | Complete | 02-04 |
+| CORE-03: Data Freshness Indicator | Phase 2 | Complete | 02-01, 02-02 |
+| CORE-04: Export to CSV | Phase 2 | Complete | 02-02 |
+| ENV-01: Environment Setup | Phase 2.1 | Complete | 02.1-01 |
+| UX-01: Responsive Mobile Layout | Phase 3 | Complete | 03-01 |
+| UX-02: Loading States | Phase 3 | Complete | 03-02 |
+| UX-03: Landing Page | Phase 3 | Complete | 03-03 |
+| HIST-01: Historical Comparison | Phase 4 | Complete | 04-01 |
+| HOLD-01: Per-Holder View | Phase 4 | Complete | 04-02 |
+| DASH-01: Top Movers Dashboard | Phase 4 | Complete | 04-03 |
+| PARSE-01: Fix Holder Name Truncation | Phase 5 | Pending | TBD |
+| PARSE-02: Re-import Data dengan Extractor Baru | Phase 5 | Pending | TBD |
+| ENTITY-01: User Dapat Membuat Entity Group | Phase 6 | Pending | TBD |
+| ENTITY-02: User Dapat Tambah Holder Alias ke Entity | Phase 6 | Pending | TBD |
+| ENTITY-03: User Dapat Hapus Alias dari Entity | Phase 6 | Pending | TBD |
+| AGGR-01: Entity Profile Page | Phase 7 | Pending | TBD |
+| AGGR-02: Stock Detail Page Tampilkan Entity Aggregate | Phase 7 | Pending | TBD |
 
-**Coverage:** 17/17 requirements mapped (100%) ✓
+**Coverage:** 23/23 requirements mapped (100%) ✓
 
 ---
 
@@ -208,6 +286,12 @@ Phase 2.1: Solve Error (fixes runtime issues)
 Phase 3: User Experience (requires core features)
     ↓
 Phase 4: Enhancement Features (requires core + historical data)
+    ↓
+Phase 5: PDF Fix & Data Quality (v1.1 — fix source data before grouping)
+    ↓
+Phase 6: Entity Data Model & Management (requires clean holder names)
+    ↓
+Phase 7: Aggregate Views (requires entity grouping to be populated)
 ```
 
 ---
@@ -228,11 +312,20 @@ Phase 4: Enhancement Features (requires core + historical data)
 4. **Missing Data ≠ Zero** (Phase 4)
    - Mitigation: Mark disappeared holders as "below_threshold" not zero, track last known position, show "< 1%" for disappeared holders
 
+5. **Entity Double-Counting** (Phase 6)
+   - Mitigation: UNIQUE constraint on holder_id in person_holders join table; conflict detection with human-readable 409 response before any merge is saved
+
+6. **Fuzzy Search Over-Merging Indonesian Names** (Phase 6)
+   - Mitigation: Strip PT/Tbk tokens before similarity scoring; raise threshold to 0.85-0.90 for institutional names; always require user confirmation before saving a merge
+
+7. **Stale Cache After Entity Ungroup** (Phase 7)
+   - Mitigation: Call revalidatePath() on entity membership changes to invalidate affected stock detail pages
+
 ---
 
 ## Out of Scope
 
-Explicitly excluded from v1:
+Explicitly excluded from v1 and v1.1:
 
 - Real-time updates (IDX data is monthly)
 - Portfolio tracking (adds authentication complexity)
@@ -243,8 +336,11 @@ Explicitly excluded from v1:
 - Multi-exchange support (dilutes focus, IDX focus is competitive moat)
 - User-uploaded PDFs (quality control, storage costs, abuse potential)
 - Alert system (monthly cadence makes alerts low urgency)
+- Network graph visualization (deferred to v2; aggregate view delivers most value first)
+- Automated ML entity resolution (false positives corrupt financial data)
+- Public/crowdsourced entity grouping (data integrity risk without moderation)
 
 ---
 
 *Last updated: 2026-03-15*
-*All phases complete! Ready for deployment and testing.*
+*v1.0 complete. v1.1 phases 5-7 added.*
