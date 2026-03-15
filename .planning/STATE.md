@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-03-15T12:42:11.134Z"
+status: planning
+last_updated: "2026-03-15T12:45:53.417Z"
 progress:
   total_phases: 8
   completed_phases: 7
@@ -37,7 +37,7 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 **Milestone:** v1.1 (Lineage & Entity Linking)
 **Phase:** 6 (Entity Data Model & Management) - COMPLETE
 **Plan:** 06-03 complete
-**Status:** Phase 6 complete — entity UI: /entities list page, /entities/[id] detail page, EntityCreateForm, EntityAliasesTable, AliasSearchCombobox (cmdk), nav link
+**Status:** Ready to plan
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
 **Progress Bar (v1.1):** ██████░░░░ 86% (6/7 plans)
 
