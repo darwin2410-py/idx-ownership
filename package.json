@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "tsx src/lib/db/migrate.ts",
-    "import-pdf": "tsx scripts/manual-import.ts"
+    "import-pdf": "tsx scripts/manual-import.ts",
+    "seed-historical": "tsx scripts/seed-historical-data.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
