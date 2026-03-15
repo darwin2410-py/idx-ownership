@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-03-15T15:08:00.000Z"
+status: executing
+last_updated: "2026-03-15T15:11:14.907Z"
 progress:
   total_phases: 9
   completed_phases: 8
@@ -36,17 +36,17 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 
 **Milestone:** v1.1 (Lineage & Entity Linking) - COMPLETE
 **Phase:** 7 (Aggregate Views) - COMPLETE
-**Plan:** 08-01 complete
+**Plan:** 08-02 complete
 **Status:** In progress (Phase 8)
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
 **Progress Bar (v1.1):** ██████████ 100% (7/7 plans)
-**Progress Bar (v1.2):** [█░░░░░░░░░] 10% (1/10 plans — Phase 8 data layer done)
+**Progress Bar (v1.2):** [██░░░░░░░░] 20% (2/10 plans — Phase 8 graph UI components done)
 
 ### Next Action
-Phase 8 Plan 02: Build graph page components with @xyflow/react canvas.
+Phase 8 Plan 03: Build /graph/holder/[name] and /graph/entity/[id] page routes + wire holder name links on /stocks/[code].
 
 ### Context File
-`.planning/phases/08-network-graph-visualization/08-01-SUMMARY.md` - Most recent plan summary
+`.planning/phases/08-network-graph-visualization/08-02-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
 **Session 14:** Phase 7 Plan 02 Complete (Phase 7 COMPLETE — v1.1 COMPLETE)
@@ -295,6 +295,16 @@ Phase 8 Plan 02: Build graph page components with @xyflow/react canvas.
 24. **revalidate = 0 on /stocks/[code] (no caching)** (Decision ID: KD-024)
     - Rationale: Entity alias changes at /entities/[id] must be immediately visible on /stocks/[code]; a 3600s cache would show stale entity aggregate rows after an alias is added or removed
     - Outcome: Implemented (src/app/stocks/[code]/page.tsx, Phase 7, Plan 02)
+    - Date: 2026-03-15
+
+25. **BackgroundVariant.Dots enum required for @xyflow/react v12** (Decision ID: KD-025)
+    - Rationale: @xyflow/react v12 TypeScript types only accept BackgroundVariant enum values, not string literals like "dots"; string literal causes TS2322 type error
+    - Outcome: Implemented (graph-canvas.tsx, Phase 8, Plan 02)
+    - Date: 2026-03-15
+
+26. **onNodeClick + router.push for graph navigation (not Link inside node)** (Decision ID: KD-026)
+    - Rationale: Wrapping ReactFlow custom nodes in Next.js Link interferes with the library's drag detection; click-based navigation via onNodeClick callback is the correct pattern
+    - Outcome: Implemented (graph-canvas.tsx, Phase 8, Plan 02)
     - Date: 2026-03-15
 
 ### Stack Choices
