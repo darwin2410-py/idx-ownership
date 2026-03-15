@@ -86,24 +86,28 @@ async function tryIDXConcatenatedStrategy(
 
     // Extract investor name using the known IDX investor type codes
     // These are always 3-char codes (2 letters + D/F for domestic/foreign)
-    const KNOWN_TYPE_CODES = /CPD|CPF|IDD|IDF|IBF|IBD|ISF|ISD|SCF|SCD|OTF|OTD|ACF|ACD|MIF|MID|YPD|YPF|ICF|ICD|PLF|PLD|ISI|CPI|ACI/g;
+    // Type codes are always 3-char investor classification codes in IDX PDFs.
+    // Using a non-global regex to avoid /g flag statefulness (stateful lastIndex bug).
+    const TYPE_CODE_NONGLOBAL = /CPD|CPF|IDD|IDF|IBF|IBD|ISF|ISD|SCF|SCD|OTF|OTD|ACF|ACD|MIF|MID|YPD|YPF|ICF|ICD|PLF|PLD|ISI|CPI|ACI/;
     const withoutDate = trimmed.substring(dateMatch[0].length);
     let holderName = '';
 
-    // Find the LAST type code occurrence (actual type code, not one inside a name)
-    let lastTypeIdx = -1;
-    for (const m of withoutDate.matchAll(KNOWN_TYPE_CODES)) {
-      if (m.index !== undefined) lastTypeIdx = m.index;
-    }
-
-    if (lastTypeIdx !== -1) {
-      const beforeTypeCode = withoutDate.substring(0, lastTypeIdx);
-      const tbkIdx = beforeTypeCode.indexOf('Tbk');
-      if (tbkIdx !== -1) {
-        holderName = beforeTypeCode.substring(tbkIdx + 3).trim();
-      } else {
-        holderName = beforeTypeCode.substring(Math.floor(beforeTypeCode.length / 2)).trim();
+    // Strategy: find "Tbk" which ends the emiten (issuer) name.
+    // Everything after the FIRST "Tbk" is: [INVESTOR_NAME][TYPE_CODE][COUNTRY][...]
+    // The investor name ends at the FIRST type code occurrence in that substring.
+    // Using indexOf (not lastIndexOf) because emiten Tbk always appears before investor Tbk.
+    const tbkPos = withoutDate.indexOf('Tbk');
+    if (tbkPos !== -1) {
+      const afterTbk = withoutDate.substring(tbkPos + 3).trim();
+      const firstTypeMatch = afterTbk.match(TYPE_CODE_NONGLOBAL);
+      if (firstTypeMatch && firstTypeMatch.index !== undefined) {
+        holderName = afterTbk.substring(0, firstTypeMatch.index).trim();
       }
+    } else {
+      // Edge case: emiten without Tbk (government entities or foreign-listed on IDX).
+      // Log warning and use floor(length/2) heuristic as last resort.
+      console.warn(`[pdf-extractor] No Tbk boundary found for line: ${trimmed.substring(0, 60)}...`);
+      holderName = withoutDate.substring(Math.floor(withoutDate.length / 2)).trim();
     }
 
     if (!holderName || holderName.length < 3) {
