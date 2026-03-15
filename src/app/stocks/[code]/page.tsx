@@ -1,5 +1,5 @@
 import { findOwnershipByStockWithHolders, findEmitenByCode, getLatestPeriod } from '@/lib/repositories/ownership-repository';
-import { HoldersTable } from '@/components/holders-table';
+import { StockDetailComparison } from '@/components/stock-detail-comparison';
 import { ErrorState, NotFoundState, EmptyState } from '@/components/stock-states';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
@@ -99,10 +99,11 @@ async function StockDetail({
         <DataFreshnessBadge period={latestPeriod ? { year: latestPeriod.year, month: latestPeriod.month } : null} />
 
         <div className="mt-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Kepemilikan Saham di Atas 1%
-          </h2>
-          <HoldersTable data={sortedData} stockCode={stockCode} />
+          <StockDetailComparison
+            stockCode={stockCode}
+            currentData={sortedData}
+            currentPeriod={latestPeriod?.id || null}
+          />
         </div>
       </div>
     );
@@ -133,7 +134,11 @@ export default async function StockDetailPage({
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
           <div className="h-4 bg-gray-200 rounded w-64 mb-8"></div>
-          <HoldersTable data={[]} stockCode={stockCode} isLoading={true} />
+          <StockDetailComparison
+            stockCode={stockCode}
+            currentData={[]}
+            currentPeriod={null}
+          />
         </div>
       }>
         <StockDetail
