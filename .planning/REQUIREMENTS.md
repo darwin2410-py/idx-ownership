@@ -323,8 +323,8 @@ Mapping requirements to roadmap phases:
 | ENTITY-01 | Phase 6 | Complete |
 | ENTITY-02 | Phase 6 | Complete |
 | ENTITY-03 | Phase 6 | Complete |
-| AGGR-01 | Phase 7 | Pending |
-| AGGR-02 | Phase 7 | Pending |
+| AGGR-01 | Phase 7 | Complete |
+| AGGR-02 | Phase 7 | Complete |
 
 ---
 

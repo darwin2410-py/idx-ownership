@@ -18,7 +18,7 @@
 | 4. Enhancement Features | 3/3 | Complete | 04-01, 04-02, 04-03 |
 | 5. PDF Fix & Data Quality | 2/2 | Complete   | 2026-03-15 |
 | 6. Entity Data Model & Management | 3/3 | Complete   | 2026-03-15 |
-| 7. Aggregate Views | 0/2 | Not started | - |
+| 7. Aggregate Views | 2/2 | Complete   | 2026-03-15 |
 
 **v1.0 Progress:** 15/15 plans complete (100%)
 **v1.1 Progress:** 0 plans complete (Not started)
@@ -35,7 +35,7 @@
 - [x] **Phase 5: PDF Fix & Data Quality** - Fix holder name truncation in PDF extractor and re-import clean data (completed 2026-03-15)
 - [x] **Phase 6: Entity Data Model & Management** - Schema, API, and admin UI for creating and managing entity groups
  (completed 2026-03-15)
-- [ ] **Phase 7: Aggregate Views** - Entity profile page and aggregate ownership display on stock detail pages
+- [x] **Phase 7: Aggregate Views** - Entity profile page and aggregate ownership display on stock detail pages (completed 2026-03-15)
 
 ---
 
@@ -236,7 +236,7 @@
 4. Stocks with no entity grouping display exactly as before — no visual change or regression
 5. User can sort the entity profile page by total ownership percentage to identify the entity's largest positions
 
-**Plans:** 2 plans in 1 wave
+**Plans:** 2/2 plans complete
 
 **Wave 1 (Parallel):**
 - [ ] [07-01-PLAN.md](.planning/phases/07-aggregate-views/07-01-PLAN.md) — Entity portfolio table on /entities/[id]: findEntityPortfolio() + expandable TanStack Table

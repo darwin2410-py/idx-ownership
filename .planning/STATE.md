@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-03-15T12:45:53.417Z"
+last_updated: "2026-03-15T13:14:19.411Z"
 progress:
   total_phases: 8
-  completed_phases: 7
-  total_plans: 20
-  completed_plans: 20
+  completed_phases: 8
+  total_plans: 22
+  completed_plans: 22
 ---
 
 # STATE - IDX Ownership Visualizer
@@ -34,20 +34,37 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 
 ## Current Position
 
-**Milestone:** v1.1 (Lineage & Entity Linking)
-**Phase:** 6 (Entity Data Model & Management) - COMPLETE
-**Plan:** 06-03 complete
-**Status:** Ready to plan
+**Milestone:** v1.1 (Lineage & Entity Linking) - COMPLETE
+**Phase:** 7 (Aggregate Views) - COMPLETE
+**Plan:** 07-02 complete
+**Status:** v1.1 milestone complete
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
-**Progress Bar (v1.1):** ██████░░░░ 86% (6/7 plans)
+**Progress Bar (v1.1):** ██████████ 100% (7/7 plans)
 
 ### Next Action
-Execute Phase 7: Aggregate Views (entity aggregate ownership totals and per-entity portfolio view).
+v1.1 milestone is complete. All 7 requirements implemented. Next: deployment (Vercel) or v1.2 planning.
 
 ### Context File
-`.planning/phases/06-entity-data-model-and-management/06-03-SUMMARY.md` - Most recent plan summary
+`.planning/phases/07-aggregate-views/07-02-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
+**Session 14:** Phase 7 Plan 02 Complete (Phase 7 COMPLETE — v1.1 COMPLETE)
+- Added findOwnershipByStockWithEntityContext() to ownership-repository.ts with LEFT JOINs to entity_holders + entities
+- Exported HolderRowWithEntity type with holderId, entityId, entityName fields
+- Added buildDisplayRows() pure function and DisplayRow discriminated union to stock-detail-comparison.tsx
+- StockDetailComparison renders blue entity aggregate cards above HoldersTable when holders share an entity
+- Stocks with no entity grouping: entityRows.length === 0, section hidden (no regression)
+- Set revalidate = 0 on /stocks/[code] for immediate alias change visibility
+- npm run build exits 0; all success criteria pass
+- Commits: f69f9e5 (ownership-repository), 1909364 (stock-detail-comparison)
+
+**Session 13:** Phase 7 Plan 01 Complete
+- Added findEntityPortfolio() to entity-repository.ts: groups ownership records by stock, sums shares + percentage per entity across all aliases
+- Created EntityPortfolioTable client component with TanStack Table expandable rows
+- Created /entities/[id]/portfolio page (server component, parallel data fetch)
+- Auto-fix: wired /stocks/[code] page to findOwnershipByStockWithEntityContext (74ca5ce)
+- npm run build exits 0
+
 **Session 12:** Phase 6 Plan 03 Complete (Phase 6 COMPLETE)
 - Created /entities server page with entity table (name, alias count, Lihat link) and empty state
 - Created EntityCreateForm client component: POST /api/entities, 409 shows inline error, 201 clears + router.refresh()
@@ -263,6 +280,16 @@ Execute Phase 7: Aggregate Views (entity aggregate ownership totals and per-enti
 22. **Direct SQL DDL for New Tables (not drizzle-kit push)** (Decision ID: KD-022)
     - Rationale: drizzle-kit push triggered interactive TTY prompt about renaming unique_period_emiten_holder constraint on existing 7253-row table; --force flag did not bypass it; direct SQL with IF NOT EXISTS is idempotent, non-interactive, and safe
     - Outcome: Implemented (scripts/create-entity-tables.ts, Phase 6, Plan 01)
+    - Date: 2026-03-15
+
+23. **Entity aggregate rows rendered as cards above HoldersTable** (Decision ID: KD-023)
+    - Rationale: Inserting aggregate rows inside HoldersTable would require modifying TanStack Table data model and row rendering logic; rendering as separate <div> cards above the table keeps HoldersTable unchanged and maintains clear visual separation of entity context from individual holder records
+    - Outcome: Implemented (stock-detail-comparison.tsx, Phase 7, Plan 02)
+    - Date: 2026-03-15
+
+24. **revalidate = 0 on /stocks/[code] (no caching)** (Decision ID: KD-024)
+    - Rationale: Entity alias changes at /entities/[id] must be immediately visible on /stocks/[code]; a 3600s cache would show stale entity aggregate rows after an alias is added or removed
+    - Outcome: Implemented (src/app/stocks/[code]/page.tsx, Phase 7, Plan 02)
     - Date: 2026-03-15
 
 ### Stack Choices
