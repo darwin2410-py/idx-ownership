@@ -1,7 +1,12 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { findEntityById, findAliasesByEntityId } from '@/lib/repositories/entity-repository';
+import {
+  findEntityById,
+  findAliasesByEntityId,
+  findEntityPortfolio,
+} from '@/lib/repositories/entity-repository';
 import { EntityAliasesTable } from '@/components/entity-aliases-table';
+import { EntityPortfolioTable } from '@/components/entity-portfolio-table';
 
 export const revalidate = 0;
 
@@ -23,7 +28,10 @@ export default async function EntityDetailPage({
     notFound();
   }
 
-  const aliases = await findAliasesByEntityId(id);
+  const [aliases, portfolio] = await Promise.all([
+    findAliasesByEntityId(id),
+    findEntityPortfolio(id),
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -46,6 +54,17 @@ export default async function EntityDetailPage({
 
       {/* Alias table */}
       <EntityAliasesTable entityId={id} aliases={aliases} />
+
+      {/* Portfolio section */}
+      <div className="mt-10">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Portfolio Kepemilikan
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Total kepemilikan saham gabungan seluruh alias pada periode terakhir.
+        </p>
+        <EntityPortfolioTable rows={portfolio} />
+      </div>
     </div>
   );
 }
