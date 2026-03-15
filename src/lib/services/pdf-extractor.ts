@@ -50,6 +50,7 @@ async function tryIDXConcatenatedStrategy(
   pdfData: any
 ): Promise<ExtractedOwnershipRecord[]> {
   const records: ExtractedOwnershipRecord[] = [];
+  const rankPerStock = new Map<string, number>();
   const text = pdfData.text;
   const lines = text.split('\n');
 
@@ -118,8 +119,10 @@ async function tryIDXConcatenatedStrategy(
     holderName = cleanHolderName(holderName);
 
     if (holderName.length >= 3 && percentage !== null) {
+      const stockRank = (rankPerStock.get(stockCode) || 0) + 1;
+      rankPerStock.set(stockCode, stockRank);
       records.push({
-        rank: records.length + 1,
+        rank: stockRank,
         stockCode,
         holderName,
         sharesOwned: sharesOwned || 0,
