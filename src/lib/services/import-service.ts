@@ -16,7 +16,6 @@ import {
   upsertHolder,
   upsertOwnershipRecord,
   findPeriodById,
-  withTransaction,
 } from '../repositories/ownership-repository';
 
 /**
@@ -181,26 +180,30 @@ export async function importFromPDF(
     console.log(`✓ Importing to database...`);
     let recordsImported = 0;
 
-    await withTransaction(async (tx) => {
-      // Upsert period record
-      const period = await upsertPeriod(extractionResult.period);
-      console.log(`✓ Period record: ${period.id}`);
+    // NOTE: Transactions disabled due to neon-serverless driver limitations
+    // The upsert operations are idempotent, so re-running is safe
+    // Upsert period record
+    const period = await upsertPeriod(extractionResult.period);
+    console.log(`✓ Period record: ${period.id}`);
 
-      // Import each record
-      for (const record of extractionResult.records) {
-        // Upsert emiten
-        const emiten = await upsertEmiten(record.stockCode, record.stockCode);
+    // Import each record
+    for (const record of extractionResult.records) {
+      // Upsert emiten
+      const emiten = await upsertEmiten(record.stockCode, record.stockCode);
 
-        // Upsert holder
-        const holder = await upsertHolder(record.holderName);
+      // Upsert holder
+      const holder = await upsertHolder(record.holderName);
 
-        // Upsert ownership record
-        await upsertOwnershipRecord(record, period.id, emiten.id, holder.id);
-        recordsImported++;
+      // Upsert ownership record
+      await upsertOwnershipRecord(record, period.id, emiten.id, holder.id);
+      recordsImported++;
+
+      if (recordsImported % 500 === 0) {
+        console.log(`  Progress: ${recordsImported}/${extractionResult.records.length} records`);
       }
+    }
 
-      console.log(`✓ Imported ${recordsImported} ownership records`);
-    });
+    console.log(`✓ Imported ${recordsImported} ownership records`);
 
     const importTime = Date.now() - startTime;
     console.log(`✓ Import complete in ${(importTime / 1000).toFixed(2)}s`);
@@ -313,16 +316,15 @@ export async function importFromJSON(
 
     let recordsImported = 0;
 
-    await withTransaction(async (tx) => {
-      const period = await upsertPeriod(extractionResult.period);
+    // NOTE: Transactions disabled due to neon-serverless driver limitations
+    const period = await upsertPeriod(extractionResult.period);
 
-      for (const record of extractionResult.records) {
-        const emiten = await upsertEmiten(record.stockCode, record.stockCode);
-        const holder = await upsertHolder(record.holderName);
-        await upsertOwnershipRecord(record, period.id, emiten.id, holder.id);
-        recordsImported++;
-      }
-    });
+    for (const record of extractionResult.records) {
+      const emiten = await upsertEmiten(record.stockCode, record.stockCode);
+      const holder = await upsertHolder(record.holderName);
+      await upsertOwnershipRecord(record, period.id, emiten.id, holder.id);
+      recordsImported++;
+    }
 
     return {
       success: true,

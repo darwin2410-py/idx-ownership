@@ -17,6 +17,10 @@
  *   npm run import-pdf -- ./data.pdf --force
  */
 
+// Load environment variables from .env file
+import { config } from 'dotenv';
+config();
+
 import { importFromPDF } from '../src/lib/services/import-service';
 import * as fs from 'fs';
 import * as path from 'path';

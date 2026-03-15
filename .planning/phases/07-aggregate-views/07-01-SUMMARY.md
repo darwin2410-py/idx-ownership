@@ -121,6 +121,14 @@ None - no external service configuration required.
 - findOwnershipByStockWithEntityContext already available in ownership-repository.ts (from feat(07-02)) — ready for AGGR-02 (entity context on stock detail page)
 - No blockers
 
+## Self-Check: PASSED
+
+- src/lib/repositories/entity-repository.ts: FOUND (findEntityPortfolio, EntityPortfolioRow, AliasBreakdown exported)
+- src/components/entity-portfolio-table.tsx: FOUND
+- src/app/entities/[id]/page.tsx: FOUND (portfolio section added)
+- .planning/phases/07-aggregate-views/07-01-SUMMARY.md: FOUND
+- Commits 658d4ec, 74ca5ce, 5bb23d0, 73320ba: all verified in git log
+
 ---
 *Phase: 07-aggregate-views*
 *Completed: 2026-03-15*
