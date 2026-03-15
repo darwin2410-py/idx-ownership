@@ -171,6 +171,88 @@ export async function removeAlias(
     );
 }
 
+// ─── Portfolio aggregate types ──────────────────────────────────────────────
+
+export type AliasBreakdown = {
+  holderId: number;
+  holderName: string;
+  percentage: string; // decimal string e.g. "5.25"
+  shares: number;
+};
+
+export type EntityPortfolioRow = {
+  emitenId: string;
+  emitenName: string;
+  totalPercentage: string; // SUM as decimal string e.g. "10.50"
+  totalShares: number;
+  aliases: AliasBreakdown[];
+};
+
+/**
+ * Find portfolio aggregate for all aliases of an entity
+ * Returns one row per stock held by any alias, with combined totals and per-alias breakdowns
+ * Resolved against the latest period (most recent year/month)
+ * Results ordered by totalPercentage DESC; aliases within each row ordered by percentage DESC
+ */
+export async function findEntityPortfolio(
+  entityId: number
+): Promise<EntityPortfolioRow[]> {
+  // Resolve the latest period
+  const periodResult = await db.execute<{ id: string }>(
+    sql`SELECT id FROM periods ORDER BY year DESC, month DESC LIMIT 1`
+  );
+
+  if (periodResult.rows.length === 0) {
+    return [];
+  }
+
+  const targetPeriod = periodResult.rows[0].id;
+
+  const result = await db.execute<{
+    emiten_id: string;
+    emiten_name: string;
+    total_percentage: string;
+    total_shares: string | number;
+    aliases: AliasBreakdown[] | string;
+  }>(
+    sql`
+      SELECT
+        e.id            AS emiten_id,
+        e.name          AS emiten_name,
+        SUM(or2.ownership_percentage)::numeric(7,2)::text AS total_percentage,
+        SUM(or2.shares_owned)                             AS total_shares,
+        json_agg(json_build_object(
+          'holderId',   h.id,
+          'holderName', h.canonical_name,
+          'percentage', or2.ownership_percentage::text,
+          'shares',     or2.shares_owned
+        ) ORDER BY or2.ownership_percentage DESC)         AS aliases
+      FROM entity_holders eh
+      JOIN holders        h   ON h.id  = eh.holder_id
+      JOIN ownership_records or2
+                              ON or2.holder_id = h.id
+                             AND or2.period_id = ${targetPeriod}
+      JOIN emiten         e   ON e.id  = or2.emiten_id
+      WHERE eh.entity_id = ${entityId}
+      GROUP BY e.id, e.name
+      ORDER BY total_percentage DESC
+    `
+  );
+
+  return result.rows.map((r) => ({
+    emitenId: r.emiten_id,
+    emitenName: r.emiten_name,
+    totalPercentage: r.total_percentage,
+    totalShares: Number(r.total_shares),
+    aliases:
+      typeof r.aliases === 'string'
+        ? (JSON.parse(r.aliases) as AliasBreakdown[])
+        : r.aliases,
+  }));
+}
+
+// ─── Holder trigram search ───────────────────────────────────────────────────
+
 /**
  * Search holders by trigram similarity on canonical_name
  * Uses pg_trgm % operator (similarity operator) for fuzzy matching
