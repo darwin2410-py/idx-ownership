@@ -5,6 +5,7 @@ import {
   serial,
   timestamp,
   decimal,
+  bigint,
   pgSchema,
   unique,
   index,
@@ -49,7 +50,7 @@ export const ownershipRecords = pgTable('ownership_records', {
   emitenId: text('emiten_id').notNull().references(() => emiten.id, { onDelete: 'restrict' }),
   holderId: integer('holder_id').notNull().references(() => holders.id, { onDelete: 'restrict' }),
   rank: integer('rank').notNull(), // Position in top holders list
-  sharesOwned: integer('shares_owned').notNull(), // Number of shares (using integer as bigint equivalent)
+  sharesOwned: bigint('shares_owned', { mode: 'number' }).notNull(), // Number of shares (can exceed 2B)
   ownershipPercentage: decimal('ownership_percentage', { precision: 5, scale: 2 }).notNull(), // Percentage with 2 decimals
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => ({
@@ -62,10 +63,35 @@ export const ownershipRecords = pgTable('ownership_records', {
   periodEmitenIdx: index('ownership_records_period_emiten_idx').on(table.periodId, table.emitenId),
 }));
 
+// entities table - named groups representing a person/conglomerate
+export const entities = pgTable('entities', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  description: text('description'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  nameIdx: index('entities_name_idx').on(table.name),
+}));
+
+// entity_holders join table - links holders to entities
+// CRITICAL: UNIQUE on holder_id means each holder can belong to at most one entity
+export const entityHolders = pgTable('entity_holders', {
+  id: serial('id').primaryKey(),
+  entityId: integer('entity_id').notNull().references(() => entities.id, { onDelete: 'cascade' }),
+  holderId: integer('holder_id').notNull().references(() => holders.id, { onDelete: 'restrict' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueHolderId: unique('entity_holders_unique_holder').on(table.holderId),
+  entityIdIdx: index('entity_holders_entity_id_idx').on(table.entityId),
+  holderIdIdx: index('entity_holders_holder_id_idx').on(table.holderId),
+}));
+
 // Export the schema for use in queries
 export const schema = {
   periods,
   emiten,
   holders,
   ownershipRecords,
+  entities,
+  entityHolders,
 };
