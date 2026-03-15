@@ -1,11 +1,11 @@
-import { findOwnershipByStockWithHolders, findEmitenByCode, getLatestPeriod } from '@/lib/repositories/ownership-repository';
+import { findOwnershipByStockWithEntityContext, findEmitenByCode, getLatestPeriod } from '@/lib/repositories/ownership-repository';
 import { StockDetailComparison } from '@/components/stock-detail-comparison';
 import { ErrorState, NotFoundState, EmptyState } from '@/components/stock-states';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-// Cache for 1 hour
-export const revalidate = 3600;
+// No caching — entity alias changes must be immediately visible
+export const revalidate = 0;
 
 /**
  * Indonesian month names
@@ -44,7 +44,7 @@ async function StockDetail({
   try {
     const [stock, ownershipData, latestPeriod] = await Promise.all([
       findEmitenByCode(stockCode),
-      findOwnershipByStockWithHolders(stockCode),
+      findOwnershipByStockWithEntityContext(stockCode),
       getLatestPeriod(),
     ]);
 
