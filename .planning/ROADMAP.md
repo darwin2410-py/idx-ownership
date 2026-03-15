@@ -15,9 +15,9 @@
 | 2. Core Visualization | 4/4 | Complete | 02-01, 02-02, 02-03, 02-04 |
 | 2.1. Solve Error | 1/1 | Complete | 02.1-01 |
 | 3. User Experience | 3/3 | Complete | 03-01, 03-02, 03-03 |
-| 4. Enhancement Features | 0/3 | Not started | - |
+| 4. Enhancement Features | 2/3 | In Progress | 04-01, 04-02 |
 
-**Overall Progress:** 12/15 plans complete (80%)
+**Overall Progress:** 14/15 plans complete (93%)
 
 ---
 
@@ -27,7 +27,7 @@
 - [x] **Phase 2: Core Visualization** - Per-Emiten view with searchable, sortable stock list and detail pages ✅
 - [x] **Phase 2.1: Solve Error** - Database connection setup and environment configuration ✅
 - [x] **Phase 3: User Experience** - Responsive mobile layout, loading states, and landing page ✅
-- [ ] **Phase 4: Enhancement Features** - Historical comparison, per-holder view, and top movers dashboard
+- [~] **Phase 4: Enhancement Features** - Historical comparison, per-holder view, and top movers dashboard (2/3 complete)
 
 ---
 
@@ -149,7 +149,14 @@
 4. User can view "Top Movers" dashboard showing biggest accumulators, biggest disposals, and most active stocks with links to detail pages
 5. User can filter dashboard tables by time period when multiple periods of historical data are available
 
-**Plans:** TBD
+**Plans:** 3 plans in 2 waves
+
+**Wave 1 (Parallel):**
+- [x] [04-01-PLAN.md](.planning/phases/04-enhancement-features/04-01-PLAN.md) — Historical comparison on stock detail pages ✅
+- [x] [04-02-PLAN.md](.planning/phases/04-enhancement-features/04-02-PLAN.md) — Per-holder view with search and portfolio export ✅
+
+**Wave 2:**
+- [ ] [04-03-PLAN.md](.planning/phases/04-enhancement-features/04-03-PLAN.md) — Top movers dashboard showing accumulations and disposals
 
 ---
 
@@ -181,9 +188,9 @@ Deferred to post-MVP releases:
 | UX-01: Responsive Mobile Layout | Phase 3 | ✅ Complete | 03-01 |
 | UX-02: Loading States | Phase 3 | ✅ Complete | 03-02 |
 | UX-03: Landing Page | Phase 3 | ✅ Complete | 03-03 |
-| HIST-01: Historical Comparison | Phase 4 | Pending | - |
-| HOLD-01: Per-Holder View | Phase 4 | Pending | - |
-| DASH-01: Top Movers Dashboard | Phase 4 | Pending | - |
+| HIST-01: Historical Comparison | Phase 4 | ✅ Complete | 04-01 |
+| HOLD-01: Per-Holder View | Phase 4 | ✅ Complete | 04-02 |
+| DASH-01: Top Movers Dashboard | Phase 4 | Pending | 04-03 |
 
 **Coverage:** 17/17 requirements mapped (100%) ✓
 
@@ -239,5 +246,5 @@ Explicitly excluded from v1:
 
 ---
 
-*Last updated: 2026-03-14*
-*Next action: `/gsd:plan-phase 4` or `/gsd:execute-phase 4` (if plans exist)*
+*Last updated: 2026-03-15*
+*Next action: `/gsd:execute-phase 4` to complete plan 04-03 (Top Movers Dashboard)*

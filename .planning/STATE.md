@@ -1,8 +1,8 @@
 # STATE - IDX Ownership Visualizer
 
 **Project:** IDX Ownership Visualizer
-**Last Updated:** 2026-03-14
-**Session:** 4 - Plan 03-03 Complete
+**Last Updated:** 2026-03-15
+**Session:** 5 - Plan 04-01 Complete
 
 ---
 
@@ -21,18 +21,37 @@ Building data pipeline and core visualization features to enable users to search
 
 ## Current Position
 
-**Phase:** 3 (User Experience) - COMPLETE
-**Plan:** 03 (Professional Landing Page) - COMPLETE
-**Status:** Phase 3 complete! All UX improvements implemented: mobile-responsive layout, loading/error states, and professional landing page
-**Progress Bar:** ██████████ 100% (10/14 core plans)
+**Phase:** 4 (Enhancement Features) - IN PROGRESS
+**Plan:** 01 (Historical Comparison) - COMPLETE
+**Status:** Historical comparison implemented! Users can now view month-over-month ownership changes with color-coded indicators
+**Progress Bar:** ██████████ 80% (12/15 core plans)
 
 ### Next Action
-Continue with Phase 4: Enhancement Features (Historical comparison, per-holder view, top movers dashboard)
+Continue with Phase 4, Plan 03: Top Movers Dashboard (dashboard showing biggest accumulations and disposals)
 
 ### Context File
-`.planning/phases/03-user-experience/03-CONTEXT.md` - Phase 3 implementation decisions
+`.planning/phases/04-enhancement-features/04-CONTEXT.md` - Phase 4 implementation decisions
 
 ### Recent Work
+**Plan 04-02 Complete:** Per-Holder View
+- Created HolderSearch component with debounced input (300ms delay)
+- Created HoldingsTable component with sortable columns and clickable stock links
+- Created holders listing page at /holders with search integration
+- Created holder detail page at /holders/[id] showing complete portfolio
+- Added CSV export API endpoint for downloading holder portfolios
+- All 5 tasks completed in 123 seconds (2 minutes)
+- Commits: 7daa9c4, 9f83dc3, bbecd3f, fce8078
+
+**Plan 04-01 Complete:** Month-over-Month Historical Comparison
+- Added three repository functions: getPreviousPeriod(), getHistoricalComparison(), getAllPeriods()
+- Enhanced HoldersTable with comparison mode: status badges (BARU/KELUAR), color-coded changes (green ↑ / red ↓)
+- Created API endpoint /api/stocks/[code]/comparison for on-demand historical data fetching
+- Created StockDetailComparison client component with comparison toggle button
+- Added row highlighting: blue tint for new holders, gray tint for exited holders
+- All 3 tasks completed in 8 minutes
+- Commits: c52c688, 7e0ce97, ff630dc
+- Button text: 'Bandingkan Bulan Lalu' / 'Sembunyikan Perbandingan'
+
 **Plan 03-03 Complete:** Professional Landing Page
 - Created Footer component with FAQ, credits, disclaimer, and quick links
 - Updated root layout with sticky navigation header and footer integration
@@ -209,6 +228,21 @@ Continue with Phase 4: Enhancement Features (Historical comparison, per-holder v
    - Rationale: WCAG 2.1 AAA recommends 44x44px, 48px provides comfortable margin
    - Outcome: ✅ Implemented (min-h-12 on all buttons and inputs)
    - Date: 2026-03-14
+
+13. **Holder ID as URL Parameter** (Decision ID: KD-013)
+   - Rationale: Numeric IDs are clean and URL-safe, holder names can be long/special characters
+   - Outcome: ✅ Implemented (/holders/[id] route pattern)
+   - Date: 2026-03-15
+
+14. **Search Result Limit of 50** (Decision ID: KD-014)
+   - Rationale: Prevents performance degradation, most users find what they need in top 50
+   - Outcome: ✅ Implemented (searchHoldersByName limits to 50 results)
+   - Date: 2026-03-15
+
+15. **CSV Export via API Route** (Decision ID: KD-015)
+   - Rationale: Server-side generation avoids browser limits, consistent with stock export pattern
+   - Outcome: ✅ Implemented (/api/holders/[id]/export endpoint)
+   - Date: 2026-03-15
 
 ### Stack Choices
 - **Frontend:** Next.js 15 + React 19 + TypeScript 5.x ✅

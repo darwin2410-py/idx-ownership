@@ -230,7 +230,7 @@ Mapping requirements to roadmap phases:
 | UX-01 | Phase 3 | Pending |
 | UX-02 | Phase 3 | Pending |
 | UX-03 | Phase 3 | Pending |
-| HIST-01 | Phase 4 | Pending |
+| HIST-01 | Phase 4 | Complete |
 | HOLD-01 | Phase 4 | Pending |
 | DASH-01 | Phase 4 | Pending |
 
