@@ -3,6 +3,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   createColumnHelper,
   flexRender,
@@ -43,7 +44,12 @@ const columns = [
     ),
     cell: (info) => (
       <div className="left-0 sticky z-10 bg-white min-w-[200px]">
-        {info.getValue()}
+        <Link
+          href={`/graph/holder/${encodeURIComponent(info.getValue())}`}
+          className="text-blue-600 hover:text-blue-800 hover:underline"
+        >
+          {info.getValue()}
+        </Link>
       </div>
     ),
     enableSorting: true,
@@ -204,7 +210,12 @@ export function HoldersTable({ data, stockCode, isLoading = false, showCompariso
         ),
         cell: (info) => (
           <div className="left-0 sticky z-10 bg-white min-w-[200px]">
-            {info.getValue()}
+            <Link
+              href={`/graph/holder/${encodeURIComponent(info.getValue())}`}
+              className="text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              {info.getValue()}
+            </Link>
           </div>
         ),
         enableSorting: true,
