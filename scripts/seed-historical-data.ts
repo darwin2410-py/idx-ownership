@@ -10,6 +10,10 @@
  *   npm run seed-historical
  */
 
+// Load environment variables from .env file
+import { config } from 'dotenv';
+config();
+
 import { db } from '../src/lib/db';
 import { schema } from '../src/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
