@@ -41,6 +41,97 @@ export function detectPeriodFromFileName(fileName: string): string {
 }
 
 /**
+ * IDX Concatenated Format Strategy
+ * Handles IDX PDFs where all columns are concatenated without delimiters.
+ * Format: DD-Mon-YYYY[STOCK4][ISSUER_NAME][INVESTOR_NAME][TYPE][...][SCRIPLESS][SCRIPT][TOTAL][PERCENTAGE,DD]
+ * Example: 27-Feb-2026AADIADARO ANDALAN INDONESIA TbkADARO STRATEGIC INVESTMENTSCPDINDONESIA3.200.142.83003.200.142.83041,10
+ */
+async function tryIDXConcatenatedStrategy(
+  pdfData: any
+): Promise<ExtractedOwnershipRecord[]> {
+  const records: ExtractedOwnershipRecord[] = [];
+  const text = pdfData.text;
+  const lines = text.split('\n');
+
+  const dateLinePattern = /^(\d{2}-\w{3}-\d{4})([A-Z]{3,5})/;
+  // Percentage is always X,XX or XX,XX or XXX,XX at end of line (1-100%, no % symbol)
+  // Must start with [1-9] to avoid consuming trailing zeros from the shares number
+  const percentageAtEnd = /([1-9]\d{0,2},\d{2})$/;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const dateMatch = trimmed.match(dateLinePattern);
+    if (!dateMatch) continue;
+
+    const stockCode = dateMatch[2].substring(0, 4);
+    if (!/^[A-Z]{4}$/.test(stockCode)) continue;
+
+    // Extract percentage from end of line
+    let percentage: number | null = null;
+    let sharesOwned: number | null = null;
+
+    // Strategy: find the LAST Indonesian dot-grouped number in the line (= total shares)
+    // Everything after that number's end position is the percentage text (e.g. "5,83" or "41,10")
+    const allLargeNums = [...trimmed.matchAll(/\d{1,3}(?:\.\d{3})+/g)];
+    if (allLargeNums.length > 0) {
+      const lastNum = allLargeNums[allLargeNums.length - 1];
+      const lastNumEnd = lastNum.index! + lastNum[0].length;
+      const afterShares = trimmed.slice(lastNumEnd).trim();
+      percentage = parsePercentage(afterShares);
+      sharesOwned = parseShares(lastNum[0]);
+    }
+
+    // Extract investor name using the known IDX investor type codes
+    // These are always 3-char codes (2 letters + D/F for domestic/foreign)
+    const KNOWN_TYPE_CODES = /CPD|CPF|IDD|IDF|IBF|IBD|ISF|ISD|SCF|SCD|OTF|OTD|ACF|ACD|MIF|MID|YPD|YPF|ICF|ICD|PLF|PLD|ISI|CPI|ACI/g;
+    const withoutDate = trimmed.substring(dateMatch[0].length);
+    let holderName = '';
+
+    // Find the LAST type code occurrence (actual type code, not one inside a name)
+    let lastTypeIdx = -1;
+    for (const m of withoutDate.matchAll(KNOWN_TYPE_CODES)) {
+      if (m.index !== undefined) lastTypeIdx = m.index;
+    }
+
+    if (lastTypeIdx !== -1) {
+      const beforeTypeCode = withoutDate.substring(0, lastTypeIdx);
+      const tbkIdx = beforeTypeCode.indexOf('Tbk');
+      if (tbkIdx !== -1) {
+        holderName = beforeTypeCode.substring(tbkIdx + 3).trim();
+      } else {
+        holderName = beforeTypeCode.substring(Math.floor(beforeTypeCode.length / 2)).trim();
+      }
+    }
+
+    if (!holderName || holderName.length < 3) {
+      // Fallback: everything after Tbk, strip trailing digits
+      const tbkIdx = withoutDate.indexOf('Tbk');
+      if (tbkIdx !== -1) {
+        holderName = withoutDate.substring(tbkIdx + 3).replace(/[\d.,\s]+$/, '').trim();
+      }
+    }
+
+    // Clean holder name: remove trailing numbers/codes
+    holderName = holderName.replace(/[\d.,]+$/, '').replace(/[A-Z]{3}$/, '').trim();
+    holderName = cleanHolderName(holderName);
+
+    if (holderName.length >= 3 && percentage !== null) {
+      records.push({
+        rank: records.length + 1,
+        stockCode,
+        holderName,
+        sharesOwned: sharesOwned || 0,
+        ownershipPercentage: percentage,
+      });
+    }
+  }
+
+  return records;
+}
+
+/**
  * Primary extraction strategy
  * Parses PDF using detected table structure
  */
@@ -342,6 +433,13 @@ async function tryAllStrategies(
   filePath: string
 ): Promise<{ records: ExtractedOwnershipRecord[]; strategy: 'primary' | 'fallback1' | 'fallback2'; warnings: string[] }> {
   const warnings: string[] = [];
+
+  // Try IDX concatenated format first (most common format from IDX portal)
+  const idxRecords = await tryIDXConcatenatedStrategy(pdfData);
+  warnings.push(`IDX concatenated strategy: ${idxRecords.length} records`);
+  if (idxRecords.length >= 10) {
+    return { records: idxRecords, strategy: 'primary', warnings };
+  }
 
   // Try primary strategy
   let primaryRecords = await tryPrimaryStrategy(pdfData, structure, filePath);
