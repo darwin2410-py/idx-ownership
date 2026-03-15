@@ -18,7 +18,8 @@
 | 4. Enhancement Features | 3/3 | Complete | 04-01, 04-02, 04-03 |
 | 5. PDF Fix & Data Quality | 2/2 | Complete   | 2026-03-15 |
 | 6. Entity Data Model & Management | 3/3 | Complete   | 2026-03-15 |
-| 7. Aggregate Views | 2/2 | Complete   | 2026-03-15 |
+| 7. Aggregate Views | 2/2 | Complete    | 2026-03-15 |
+| 8. Network Graph Visualization | 0/3 | Planned | — |
 
 **v1.0 Progress:** 15/15 plans complete (100%)
 **v1.1 Progress:** 0 plans complete (Not started)
@@ -35,7 +36,8 @@
 - [x] **Phase 5: PDF Fix & Data Quality** - Fix holder name truncation in PDF extractor and re-import clean data (completed 2026-03-15)
 - [x] **Phase 6: Entity Data Model & Management** - Schema, API, and admin UI for creating and managing entity groups
  (completed 2026-03-15)
-- [x] **Phase 7: Aggregate Views** - Entity profile page and aggregate ownership display on stock detail pages (completed 2026-03-15)
+- [x] **Phase 7: Aggregate Views** - Entity profile page and aggregate ownership display on stock detail pages
+ (completed 2026-03-15)
 
 ---
 
@@ -354,7 +356,35 @@ Explicitly excluded from v1 and v1.1:
 - Automated ML entity resolution (false positives corrupt financial data)
 - Public/crowdsourced entity grouping (data integrity risk without moderation)
 
+### Phase 8: Network Graph Visualization
+
+**Goal:** Users can click any holder name on a stock detail page and see an interactive force-directed graph showing all stocks that holder owns, with navigation to any stock or related holder
+
+**Requirements:** GRAPH-01
+
+**Depends on:** Phase 7
+
+**Success Criteria** (what must be TRUE):
+1. User can click a holder name on /stocks/[code] and navigate to /graph/holder/[name]
+2. Graph page shows a star layout: teal center node (holder/entity) surrounded by amber stock nodes
+3. Each edge between center and stock node is labeled with the ownership percentage
+4. Clicking an amber stock node navigates to /stocks/[code]
+5. If a holder belongs to an entity group, the graph shows the entity's aggregated portfolio (all aliases combined)
+6. Navigating to /graph/entity/[id] shows the entity's full portfolio as a graph
+7. Unknown holder names and invalid entity IDs return 404 pages
+
+**Plans:** 3 plans in 3 waves
+
+**Wave 1:**
+- [ ] [08-01-PLAN.md](.planning/phases/08-network-graph-visualization/08-01-PLAN.md) — Install @xyflow/react + d3-force; create graph-repository.ts with GraphData type, findHolderGraph, findEntityGraph
+
+**Wave 2:**
+- [ ] [08-02-PLAN.md](.planning/phases/08-network-graph-visualization/08-02-PLAN.md) — Create HolderNode (teal), StockNode (amber), and GraphCanvas client component with d3-force layout
+
+**Wave 3:**
+- [ ] [08-03-PLAN.md](.planning/phases/08-network-graph-visualization/08-03-PLAN.md) — Create /graph/holder/[name] and /graph/entity/[id] page routes; add graph entry links to holders-table.tsx
+
 ---
 
 *Last updated: 2026-03-15*
-*v1.0 complete. v1.1 phases 5-7 added. Phase 6 planned: 3 plans in 3 waves.*
+*v1.0 complete. v1.1 phases 5-7 added. Phase 8 planned: 3 plans in 3 waves.*
