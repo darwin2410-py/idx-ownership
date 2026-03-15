@@ -19,7 +19,7 @@
 | 5. PDF Fix & Data Quality | 2/2 | Complete   | 2026-03-15 |
 | 6. Entity Data Model & Management | 3/3 | Complete   | 2026-03-15 |
 | 7. Aggregate Views | 2/2 | Complete    | 2026-03-15 |
-| 8. Network Graph Visualization | 0/3 | Planned | — |
+| 8. Network Graph Visualization | 1/3 | In Progress|  |
 
 **v1.0 Progress:** 15/15 plans complete (100%)
 **v1.1 Progress:** 0 plans complete (Not started)
@@ -373,7 +373,7 @@ Explicitly excluded from v1 and v1.1:
 6. Navigating to /graph/entity/[id] shows the entity's full portfolio as a graph
 7. Unknown holder names and invalid entity IDs return 404 pages
 
-**Plans:** 3 plans in 3 waves
+**Plans:** 1/3 plans executed
 
 **Wave 1:**
 - [ ] [08-01-PLAN.md](.planning/phases/08-network-graph-visualization/08-01-PLAN.md) — Install @xyflow/react + d3-force; create graph-repository.ts with GraphData type, findHolderGraph, findEntityGraph
