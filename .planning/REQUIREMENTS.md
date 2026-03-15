@@ -1,8 +1,8 @@
 # Requirements - IDX Ownership Visualizer
 
 **Project:** IDX Ownership Visualizer
-**Version:** 1.0 (MVP)
-**Last Updated:** 2026-03-14
+**Version:** 1.0 (MVP) + 1.1 (Lineage & Entity Linking)
+**Last Updated:** 2026-03-15
 
 ---
 
@@ -142,7 +142,84 @@ Create a homepage explaining the tool's purpose.
 
 ---
 
-## v1.1 Requirements (Post-MVP)
+## v1.1 Requirements (Milestone: Lineage & Entity Linking)
+
+### PARSE - PDF Extraction Fix
+
+#### [PARSE-01] Fix Holder Name Truncation
+Perbaiki bug di PDF extractor yang memotong nama holder di tengah kalimat.
+- **Acceptance Criteria:**
+  - Holder names diekstrak lengkap (e.g., "Prajogo Pangestu" bukan "Prajogo Pange")
+  - Fix berlaku untuk semua variasi nama Indonesia (PT, Tbk, nama keluarga)
+  - Extractor tested terhadap contoh kasus truncation yang diketahui
+  - Tidak ada regresi pada extraction fields lain (kode saham, persentase, jumlah saham)
+- **Dependencies:** None (bug fix)
+
+#### [PARSE-02] Re-import Data dengan Extractor Baru
+Setelah fix, hapus dan re-import data periode yang ada agar nama holder bersih.
+- **Acceptance Criteria:**
+  - Data lama di-clear, import ulang dengan extractor yang sudah difix
+  - Jumlah records sama atau lebih banyak dari sebelumnya (7209+)
+  - Spot-check manual: "Prajogo Pangestu" dan nama panjang lain tampil lengkap
+  - Import script berjalan tanpa error
+- **Dependencies:** PARSE-01
+
+---
+
+### ENTITY - Entity Grouping
+
+#### [ENTITY-01] User Dapat Membuat Entity Group
+Siapapun dapat membuat entitas bernama yang merepresentasikan satu orang/konglomerat.
+- **Acceptance Criteria:**
+  - Form untuk buat entity baru (nama required, deskripsi optional)
+  - Nama entity harus unik
+  - Entity disimpan di tabel baru (terpisah dari holders)
+  - Halaman daftar semua entities yang dibuat
+- **Dependencies:** PARSE-02
+
+#### [ENTITY-02] User Dapat Tambah Holder Alias ke Entity
+Tandai beberapa holder records sebagai bagian dari satu entity.
+- **Acceptance Criteria:**
+  - Search holder by nama (case-insensitive, partial match)
+  - Tambah hasil search sebagai alias dari entity
+  - Satu holder hanya bisa masuk satu entity (conflict detection dengan error message)
+  - Daftar alias yang sudah ditag tampil di halaman entity
+- **Dependencies:** ENTITY-01
+
+#### [ENTITY-03] User Dapat Hapus Alias dari Entity
+Kembalikan holder ke status independen (ungroup).
+- **Acceptance Criteria:**
+  - Tombol hapus di setiap alias dalam daftar entity
+  - Setelah dihapus, holder kembali muncul sebagai individual di semua views
+  - Tidak ada cascade delete ke ownership_records (data tetap aman)
+- **Dependencies:** ENTITY-02
+
+---
+
+### AGGR - Aggregate Ownership View
+
+#### [AGGR-01] Entity Profile Page
+Halaman yang menampilkan semua kepemilikan saham dari satu entity (gabungan semua aliases).
+- **Acceptance Criteria:**
+  - URL: `/entities/[id]`
+  - Daftar semua saham yang dipegang oleh entity (melalui semua alias-nya)
+  - Per saham: total % gabungan, total saham gabungan, breakdown per alias
+  - Sortable by total percentage
+  - Link ke halaman detail saham
+- **Dependencies:** ENTITY-02
+
+#### [AGGR-02] Stock Detail Page Tampilkan Entity Aggregate
+Di halaman `/stocks/[code]`, jika beberapa holders adalah alias dari entity yang sama, tampilkan baris entity dengan total gabungan.
+- **Acceptance Criteria:**
+  - Baris entity ditampilkan di atas baris alias individualnya
+  - Entity row menampilkan: nama entity, total % gabungan, total saham gabungan
+  - Alias individual tetap tampil di bawahnya (collapsible atau indent)
+  - Stocks tanpa entity grouping tidak berubah tampilannya
+- **Dependencies:** AGGR-01
+
+---
+
+## v1.1 Requirements (Post-MVP — sudah shipped)
 
 ### [HIST-01] Historical Comparison
 Show month-over-month changes in ownership.
@@ -178,6 +255,10 @@ Show dashboard of biggest accumulators and disposals.
 
 ## v2+ Requirements (Future)
 
+### [GRAPH-01] Network Graph Visualization
+Visual graph menampilkan hubungan antara entity/holder dan emiten.
+- **Notes:** Defer dari v1.1 — prioritaskan aggregate view dulu. Gunakan @xyflow/react, max 200 nodes per subgraph.
+
 ### [ANAL-01] Accumulation/Disposal Detection
 Automatically flag significant ownership changes (>5%).
 - **Dependencies:** Multiple periods of data
@@ -196,7 +277,7 @@ Provide API access for developers.
 
 ## Out of Scope
 
-The following features are explicitly out of scope for v1:
+The following features are explicitly out of scope for v1 and v1.1:
 
 | Feature | Reason |
 |---------|--------|
@@ -209,6 +290,9 @@ The following features are explicitly out of scope for v1:
 | Multi-exchange support | Dilutes focus; IDX focus is competitive moat |
 | User-uploaded PDFs | Quality control, storage costs, abuse potential |
 | Alert system | Monthly cadence makes alerts low urgency |
+| Network graph visualization | Deferred to v2; aggregate view delivers most value first |
+| Automated ML entity resolution | False positives corrupt financial data; no labeled training data |
+| Public/crowdsourced entity grouping | Data integrity risk without moderation |
 
 ---
 
@@ -218,26 +302,33 @@ Mapping requirements to roadmap phases:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | ✅ Complete |
-| EMIT-01 | Phase 2 | Pending |
-| EMIT-02 | Phase 2 | Pending |
-| CORE-01 | Phase 2 | Pending |
-| CORE-02 | Phase 2 | Pending |
-| CORE-03 | Phase 2 | Pending |
-| CORE-04 | Phase 2 | Pending |
-| UX-01 | Phase 3 | Pending |
-| UX-02 | Phase 3 | Pending |
-| UX-03 | Phase 3 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| EMIT-01 | Phase 2 | Complete |
+| EMIT-02 | Phase 2 | Complete |
+| CORE-01 | Phase 2 | Complete |
+| CORE-02 | Phase 2 | Complete |
+| CORE-03 | Phase 2 | Complete |
+| CORE-04 | Phase 2 | Complete |
+| ENV-01 | Phase 2.1 | Complete |
+| UX-01 | Phase 3 | Complete |
+| UX-02 | Phase 3 | Complete |
+| UX-03 | Phase 3 | Complete |
 | HIST-01 | Phase 4 | Complete |
-| HOLD-01 | Phase 4 | Pending |
-| DASH-01 | Phase 4 | Pending |
+| HOLD-01 | Phase 4 | Complete |
+| DASH-01 | Phase 4 | Complete |
+| PARSE-01 | Phase 5 | Complete |
+| PARSE-02 | Phase 5 | Pending |
+| ENTITY-01 | Phase 6 | Pending |
+| ENTITY-02 | Phase 6 | Pending |
+| ENTITY-03 | Phase 6 | Pending |
+| AGGR-01 | Phase 7 | Pending |
+| AGGR-02 | Phase 7 | Pending |
 
 ---
 
-**Total v1 Requirements:** 13 requirements
-**Total v1.1 Requirements:** 3 requirements
-**Total Requirements Mapped:** 16/16 (100%)
-**Estimated Complexity:** HIGH (PDF extraction, database design, responsive UI)
-**Target Launch:** After Phase 2 completion
+**Total v1.0 Requirements:** 17 requirements (including HIST-01, HOLD-01, DASH-01, ENV-01)
+**Total v1.1 Requirements:** 7 requirements (PARSE-01, PARSE-02, ENTITY-01, ENTITY-02, ENTITY-03, AGGR-01, AGGR-02)
+**Total Requirements Mapped:** 23/23 (100%)
+**Estimated Complexity:** HIGH (PDF extraction fix + backfill, entity schema design, aggregate queries)

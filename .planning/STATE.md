@@ -1,21 +1,21 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: lineage-entity-linking
-status: active
-last_updated: "2026-03-15T00:00:00.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: planning
+last_updated: "2026-03-15T08:41:22.588Z"
 progress:
-  total_phases: 5
+  total_phases: 8
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 17
+  completed_plans: 16
 ---
 
 # STATE - IDX Ownership Visualizer
 
 **Project:** IDX Ownership Visualizer
 **Last Updated:** 2026-03-15
-**Session:** 6 - Plan 04-03 Complete (Phase 4 COMPLETE)
+**Session:** 7 - v1.1 Roadmap Created (Phases 5-7)
 
 ---
 
@@ -28,25 +28,42 @@ Menyediakan akses instan dan terstruktur ke data kepemilikan 1% saham IDX untuk 
 Website publik untuk visualisasi data kepemilikan 1% saham IDX. Data diambil dari PDF yang dirilis IDX bulanan, diekstrak dan disimpan dalam database untuk mendukung analisa historis dan deteksi akumulasi/disposal.
 
 ### Current Focus
-Building data pipeline and core visualization features to enable users to search and browse IDX stock ownership data.
+v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berdasarkan orang/entitas dengan entity grouping dan aggregate view.
 
 ---
 
 ## Current Position
 
-**Phase:** 4 (Enhancement Features) - COMPLETE
-**Plan:** 03 (Top Movers Dashboard) - COMPLETE
-**Status:** Milestone complete
-**Progress Bar:** ██████████ 100% (15/15 core plans)
+**Milestone:** v1.1 (Lineage & Entity Linking)
+**Phase:** 5 (PDF Fix & Data Quality) - In progress (Plan 01 complete)
+**Plan:** 05-01 complete, 05-02 next
+**Status:** Plan 05-01 complete — PDF extractor fix applied, audit script created
+**Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
+**Progress Bar (v1.1):** █░░░░░░░░░ 14% (1/7 plans)
 
 ### Next Action
-Phase 4 complete! All core features implemented. Ready for deployment and testing.
+Execute Plan 05-02 (historical backfill — re-import historical PDFs with fixed extractor).
 
 ### Context File
-`.planning/phases/04-enhancement-features/04-CONTEXT.md` - Phase 4 implementation decisions
+`.planning/phases/05-pdf-fix-and-data-quality/05-01-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
-**Plan 04-03 Complete:** Top Movers Dashboard
+**Session 8:** Phase 5 Plan 01 Complete
+- Fixed tryIDXConcatenatedStrategy() in pdf-extractor.ts using Tbk boundary + first non-global type code match
+- Eliminated holder name truncation caused by type codes embedded in emiten names (e.g. CPD in 'ASURANSI CPD')
+- Created audit-holder-names.ts script for Neon DB holder name quality auditing
+- Dry-run on ownership_one_percent_202603.pdf: 7211 records extracted (threshold: 7000+)
+- Commits: 76c2216 (audit script), 2c150ca (pdf-extractor fix)
+
+**Session 7:** v1.1 Roadmap Created
+- Added Phase 5: PDF Fix & Data Quality (PARSE-01, PARSE-02)
+- Added Phase 6: Entity Data Model & Management (ENTITY-01, ENTITY-02, ENTITY-03)
+- Added Phase 7: Aggregate Views (AGGR-01, AGGR-02)
+- Updated traceability matrix: 23/23 requirements mapped (100%)
+- Updated REQUIREMENTS.md traceability for all v1.1 requirements
+- All 7 v1.1 requirements mapped to phases with observable success criteria
+
+**Session 6:** Plan 04-03 Complete (Phase 4 COMPLETE)
 - Added three repository functions: getTopAccumulators(), getTopDisposals(), getMostActiveStocks()
 - Created PeriodFilter component with Indonesian month names and URL state encoding
 - Created TopMoversTable component supporting accumulators, disposals, and active-stocks types
@@ -74,116 +91,22 @@ Phase 4 complete! All core features implemented. Ready for deployment and testin
 - Commits: c52c688, 7e0ce97, ff630dc
 - Button text: 'Bandingkan Bulan Lalu' / 'Sembunyikan Perbandingan'
 
-**Plan 03-03 Complete:** Professional Landing Page
-- Created Footer component with FAQ, credits, disclaimer, and quick links
-- Updated root layout with sticky navigation header and footer integration
-- Created comprehensive landing page with hero, how it works, features grid, and CTA sections
-- Hero section with gradient background and clear value proposition
-- Two CTA buttons (primary: browse stocks, secondary: learn more)
-- How It Works section with 3 steps explaining PDF → Database → Visualization flow
-- Features section highlighting 6 key features (search, sort, export, historical, mobile, free)
-- Final CTA section encouraging action
-- Fully responsive design with Indonesian text throughout
-- Touch-friendly buttons (min-h-14 = 56px)
-- All 3 tasks completed in 87 seconds
-- Commits: f7637fc, 2fae804, e6a7d5a
-
-**Plan 03-02 Complete:** Loading States, Error Handling, and Empty States
-- Added skeleton loading with 10 animated rows to StocksTable and HoldersTable components
-- Created ErrorState component with retry button for error handling (Indonesian text)
-- Created EmptyState component for when no data is available with helpful explanation
-- Created NoResultsState component for failed searches with query display
-- Created NotFoundState component for invalid stock codes with back button
-- Added try-catch error handling to StocksList and StockDetail async components
-- Updated Suspense fallbacks from spinners to skeleton tables
-- All 4 tasks completed in 187 seconds
-- Commits: e4c5283, 70fbfc6, 382197e, af2e2e5
-
-**Plan 03-01 Complete:** Mobile-Responsive Layout
-- Added sticky first column for "Kode Saham" and "Nama Pemegang" with left-0 and z-10
-- Responsive padding: px-2 sm:px-4 md:px-6 for tighter mobile spacing
-- Responsive text sizes: text-[10px] sm:text-xs for headers, text-xs sm:text-sm for cells
-- Touch-friendly controls with min-h-12 (48px) for all buttons and inputs
-- Container-level horizontal scroll with max-w-full and -mx-4 sm:mx-0
-- No body scroll: overflow-x-auto only on table containers
-- 16px base text on inputs prevents iOS Safari auto-zoom
-- All 3 tasks completed in 142 seconds
-- Commits: d72c933, 836533a, 3fbfcee
-
-**Plan 02-03 Complete:** Sortable Tables with URL State Encoding
-- Added client-side sorting to stocks table with SortingState and getSortedRowModel
-- Implemented URL state encoding with window.history.replaceState
-- Added visual sort indicators (up/down arrows) using SVG icons
-- Made column headers clickable with cursor pointer and hover effects
-- Custom sorting function for percentage column (string to number conversion)
-- Added server-side sorting to holders table with manualSorting flag
-- Implemented URL params update with router.push and scroll: false
-- Added server-side sorting logic to detail page with percentage conversion
-- All 3 tasks completed in 119 seconds
-- Commits: db2c845, e5e6ee3, 23028fa
-
-**Plan 02-01 Complete:** Stock Listing Page with TanStack Table
-- Created `/stocks` listing page with Server Component data fetching
-- Built StocksTable component using TanStack Table v8 with Indonesian column headers
-- Added repository functions: `findAllStocksWithTopHolder`, `getLatestPeriod`
-- Data freshness badge showing "Data per: [Month Year]" in Indonesian
-- 1-hour cache revalidation (export const revalidate = 3600)
-- Clickable stock codes linking to detail pages
-- Empty state with Indonesian message when no data available
-- Suspense boundary with loading spinner
-- All 4 tasks completed in 77 seconds
-- Commits: c03c15c, 1bccc36, 0aa6092, ffe4df3
-
-**Plan 02-02 Complete:** Stock Detail Page with CSV Export
-- Created dynamic route `/stocks/[code]` for stock detail pages with Server Components
-- Built HoldersTable component using TanStack Table v8 with Indonesian formatting
-- Added server-side CSV export API endpoint with UTF-8 encoding
-- Implemented repository functions: `findOwnershipByStockWithHolders`, `findEmitenByCode`, `getLatestPeriod`
-- Data freshness badge showing last update period in Indonesian format
-- Parallel data fetching with Promise.all() for optimal performance
-- 1-hour cache revalidation for SEO and performance
-- Empty state when no ownership data available
-- notFound() for invalid stock codes
-- All 4 tasks completed in 95 seconds
-- Commits: 3125af8, 58b15d5, e9759bd, cc70b51
-
-**Plan 02-04 Complete:** Search and Filter with Debouncing
-- Added searchStocksWithFilters repository function with ilike for case-insensitive matching
-- Created StocksSearch component with custom useDebounce hook (300ms delay)
-- Implemented URL state encoding (?q= for stock code, ?holder= for holder name)
-- Added clear button that removes all filters while preserving sort parameters
-- Integrated search into stock listing page with conditional data fetching
-- Different empty states for no results vs no data
-- All 3 tasks completed in 75 seconds
-- Commits: 35f861d, 6ca8157, 2b5350c
-
-**Plan 01-04 Complete:** Import Workflow & API
-- Created repository layer with upsert operations and transaction support
-- Built import service orchestrating extraction, validation, and storage
-- Added API endpoint for PDF upload with rate limiting (10/hour per IP)
-- Created CLI script for local testing with dry-run and force-update options
-- PDF backup to backups/ directory with timestamps for audit trail
-- Idempotent operations (re-running same PDF is safe)
-- Transaction rollback on critical validation errors
-- All 4 tasks completed in 124 seconds
-- Commits: 5ae419b, 1908b94, 71d1f55, 85d142c
-
 ---
 
 ## Performance Metrics
 
 **Planning Metrics:**
-- Total Requirements: 16 (13 v1 + 3 v1.1)
-- Requirements Mapped: 16 (100%)
-- Phases Defined: 4
-- Total Success Criteria: 20
-- Average Criteria per Phase: 5
+- Total Requirements: 23 (17 v1.0 + 7 v1.1 — includes HIST-01, HOLD-01, DASH-01 previously in v1.1 post-MVP)
+- Requirements Mapped: 23 (100%)
+- Phases Defined: 7 (5 complete, 2 new for v1.1)
+- Total Success Criteria: 34 (20 v1.0 + 14 v1.1)
+- Average Criteria per Phase: ~5
 
 **Complexity Assessment:** HIGH
-- PDF extraction complexity (critical path risk)
-- Database design with historical support
-- Responsive UI with search/filter/sort/export
-- Historical analysis and period comparison
+- PDF extraction fix with historical backfill (data integrity risk)
+- Entity grouping schema design (join table with conflict detection)
+- Aggregate query patterns (GROUP BY JOIN, cache invalidation)
+- Fuzzy search tuning for Indonesian corporate names
 
 ---
 
@@ -197,12 +120,12 @@ Phase 4 complete! All core features implemented. Ready for deployment and testin
 
 1. **Next.js Framework** (Decision ID: KD-001)
    - Rationale: Rekomendasi user + great for Vercel deployment, SEO-friendly untuk public site
-   - Outcome: ✅ Implemented (Next.js 15 + React 19 + TypeScript 5.7)
+   - Outcome: Implemented (Next.js 15 + React 19 + TypeScript 5.7)
    - Date: 2025-03-14
 
 2. **Full History Storage** (Decision ID: KD-002)
    - Rationale: Enable historical comparison dan trend analysis
-   - Outcome: ✅ Implemented (schema supports append-only historical records)
+   - Outcome: Implemented (schema supports append-only historical records)
    - Date: 2025-03-14
 
 3. **Public Access** (Decision ID: KD-003)
@@ -212,73 +135,100 @@ Phase 4 complete! All core features implemented. Ready for deployment and testin
 
 4. **Neon Database** (Decision ID: KD-004)
    - Rationale: @vercel/postgres deprecated, Neon is recommended replacement
-   - Outcome: ✅ Implemented (@neondatabase/serverless + drizzle-orm/neon-http)
+   - Outcome: Implemented (@neondatabase/serverless + drizzle-orm/neon-http)
    - Date: 2026-03-14
 
 5. **Zod Runtime Validation** (Decision ID: KD-005)
    - Rationale: Type-safe runtime validation, excellent error messages, TypeScript integration
-   - Outcome: ✅ Implemented (schemas for all ownership fields, validation service with logging)
+   - Outcome: Implemented (schemas for all ownership fields, validation service with logging)
    - Date: 2026-03-14
 
 6. **Ownership Sum < 100% is Expected** (Decision ID: KD-006)
    - Rationale: IDX PDFs only contain >1% holders, smaller holders excluded
-   - Outcome: ✅ Implemented (logs WARNING not ERROR for <100% sums)
+   - Outcome: Implemented (logs WARNING not ERROR for <100% sums)
    - Date: 2026-03-14
 
 7. **Server Component Data Fetching** (Decision ID: KD-007)
    - Rationale: Best for SEO, fast initial load, less client JS, automatic caching
-   - Outcome: ✅ Implemented (stock detail page with parallel Promise.all() fetching)
+   - Outcome: Implemented (stock detail page with parallel Promise.all() fetching)
    - Date: 2026-03-14
 
 8. **Server-Side CSV Export** (Decision ID: KD-008)
    - Rationale: No browser memory limits, handles large datasets, consistent UTF-8 encoding
-   - Outcome: ✅ Implemented (API endpoint at /api/stocks/[code]/export)
+   - Outcome: Implemented (API endpoint at /api/stocks/[code]/export)
    - Date: 2026-03-14
 
 9. **Indonesian Localization** (Decision ID: KD-009)
    - Rationale: User familiarity, professional appearance for local market
-   - Outcome: ✅ Implemented (Indonesian headers, holder types, month names)
+   - Outcome: Implemented (Indonesian headers, holder types, month names)
    - Date: 2026-03-14
 
 10. **Mobile-First Responsive Design** (Decision ID: KD-010)
-   - Rationale: Indonesian users heavily use mobile devices, need touch-friendly interface
-   - Outcome: ✅ Implemented (sticky columns, 48px touch targets, responsive breakpoints)
-   - Date: 2026-03-14
+    - Rationale: Indonesian users heavily use mobile devices, need touch-friendly interface
+    - Outcome: Implemented (sticky columns, 48px touch targets, responsive breakpoints)
+    - Date: 2026-03-14
 
 11. **Sticky First Column for Tables** (Decision ID: KD-011)
-   - Rationale: Users need context (stock code or holder name) when scrolling horizontally
-   - Outcome: ✅ Implemented (position: sticky with left-0 and z-10, bg-white)
-   - Date: 2026-03-14
+    - Rationale: Users need context (stock code or holder name) when scrolling horizontally
+    - Outcome: Implemented (position: sticky with left-0 and z-10, bg-white)
+    - Date: 2026-03-14
 
 12. **Touch Target Sizing 48px Minimum** (Decision ID: KD-012)
-   - Rationale: WCAG 2.1 AAA recommends 44x44px, 48px provides comfortable margin
-   - Outcome: ✅ Implemented (min-h-12 on all buttons and inputs)
-   - Date: 2026-03-14
+    - Rationale: WCAG 2.1 AAA recommends 44x44px, 48px provides comfortable margin
+    - Outcome: Implemented (min-h-12 on all buttons and inputs)
+    - Date: 2026-03-14
 
 13. **Holder ID as URL Parameter** (Decision ID: KD-013)
-   - Rationale: Numeric IDs are clean and URL-safe, holder names can be long/special characters
-   - Outcome: ✅ Implemented (/holders/[id] route pattern)
-   - Date: 2026-03-15
+    - Rationale: Numeric IDs are clean and URL-safe, holder names can be long/special characters
+    - Outcome: Implemented (/holders/[id] route pattern)
+    - Date: 2026-03-15
 
 14. **Search Result Limit of 50** (Decision ID: KD-014)
-   - Rationale: Prevents performance degradation, most users find what they need in top 50
-   - Outcome: ✅ Implemented (searchHoldersByName limits to 50 results)
-   - Date: 2026-03-15
+    - Rationale: Prevents performance degradation, most users find what they need in top 50
+    - Outcome: Implemented (searchHoldersByName limits to 50 results)
+    - Date: 2026-03-15
 
 15. **CSV Export via API Route** (Decision ID: KD-015)
-   - Rationale: Server-side generation avoids browser limits, consistent with stock export pattern
-   - Outcome: ✅ Implemented (/api/holders/[id]/export endpoint)
-   - Date: 2026-03-15
+    - Rationale: Server-side generation avoids browser limits, consistent with stock export pattern
+    - Outcome: Implemented (/api/holders/[id]/export endpoint)
+    - Date: 2026-03-15
+
+16. **Join Table for Entity Grouping (not nullable FK)** (Decision ID: KD-016)
+    - Rationale: A direct FK on holders cannot support audit trail, clean ungroup, or conflict detection; join table with composite PK and UNIQUE holder_id prevents double-counting
+    - Outcome: Pending (Phase 6)
+    - Date: 2026-03-15
+
+17. **Manual Entity Grouping with Fuzzy Search Assist** (Decision ID: KD-017)
+    - Rationale: Automated ML entity resolution rejected — false positives corrupt financial data; pg_trgm fuzzy search finds candidates, human confirms before saving
+    - Outcome: Pending (Phase 6)
+    - Date: 2026-03-15
+
+18. **PDF Fix Before Entity Grouping** (Decision ID: KD-018)
+    - Rationale: Building entity groups on truncated holder names creates wrong aliases that require manual re-merge; fixing source data first eliminates this compounding debt
+    - Outcome: Implemented (Phase 5, Plan 01)
+    - Date: 2026-03-15
+
+19. **Tbk Boundary Anchor for IDX Holder Name Extraction** (Decision ID: KD-019)
+    - Rationale: In IDX PDFs, the emiten "Tbk" always precedes the investor section. Using indexOf('Tbk') as a boundary cleanly separates emiten name from investor name without relying on last type code occurrence (which fails when emiten name contains a type code substring)
+    - Outcome: Implemented (pdf-extractor.ts, Phase 5, Plan 01)
+    - Date: 2026-03-15
+
+20. **Non-Global Regex for Type Code Matching** (Decision ID: KD-020)
+    - Rationale: Using /g flag on a regex in a loop causes stateful lastIndex reuse bug; non-global regex with .match() is idiomatic and avoids the pitfall entirely
+    - Outcome: Implemented (TYPE_CODE_NONGLOBAL in pdf-extractor.ts)
+    - Date: 2026-03-15
 
 ### Stack Choices
-- **Frontend:** Next.js 15 + React 19 + TypeScript 5.x ✅
-- **Styling:** Tailwind CSS ✅
-- **Database:** Neon + Drizzle ORM ✅
-- **PDF Processing:** pdf-parse ✅
-- **Validation:** Zod ✅
-- **Charts/Tables:** TanStack Table 8.x ✅ (implemented in 02-02)
+- **Frontend:** Next.js 15 + React 19 + TypeScript 5.x
+- **Styling:** Tailwind CSS
+- **Database:** Neon + Drizzle ORM
+- **PDF Processing:** pdf-parse
+- **Validation:** Zod
+- **Charts/Tables:** TanStack Table 8.x
 - **State:** @tanstack/react-query + Zustand (pending)
 - **Deployment:** Vercel (pending)
+- **Fuzzy Search (v1.1):** pg_trgm (built into Neon PostgreSQL, GIN index)
+- **Entity Grouping UI (v1.1):** shadcn Command combobox (cmdk, already installed)
 
 ### Architecture Approach
 Server-first Next.js with:
@@ -287,6 +237,7 @@ Server-first Next.js with:
 - Repository pattern for data access
 - API route handlers with validation
 - Service layer for PDF extraction and historical analysis
+- v1.1 addition: persons + person_holders join table hanging off existing holders table (no FK chain modification); aggregate queries computed at read time via GROUP BY JOIN
 
 ### Critical Risks Identified
 
@@ -306,53 +257,63 @@ Server-first Next.js with:
    - Impact: Shareholders below 1% threshold disappear but still hold shares
    - Mitigation: Mark as "below_threshold", track last known position, show "< 1%"
 
+5. **Entity Double-Counting** (v1.1)
+   - Impact: Aggregate percentages inflated if a holder appears in two groups
+   - Mitigation: UNIQUE constraint on holder_id in person_holders; 409 conflict response before save
+
+6. **Fuzzy Search Over-Merging Indonesian Names** (v1.1)
+   - Impact: PT Astra International and PT Astra Otoparts share high trigram similarity; wrong merge corrupts aggregates
+   - Mitigation: Strip PT/Tbk before scoring; threshold 0.85-0.90 for institutional; require user confirmation
+
 ---
 
 ## Session Continuity
 
 ### Previous Session Actions
-- ✅ `/gsd:new-project` initialized project structure
-- ✅ Research completed (PDF extraction, visualization patterns, critical pitfalls)
-- ✅ Requirements defined and categorized (v1: 13, v1.1: 3)
-- ✅ Roadmap created with 4 phases
+- `/gsd:new-project` initialized project structure
+- Research completed (PDF extraction, visualization patterns, critical pitfalls)
+- Requirements defined and categorized (v1.0: 17, v1.1: 7)
+- Roadmap created with 4 phases (v1.0)
+- All v1.0 phases planned and implemented (Phases 1-4 complete)
 
 ### Current Session
-- Roadmap files written (ROADMAP.md, STATE.md)
-- REQUIREMENTS.md traceability updated
-- Ready for phase planning
+- v1.1 roadmap phases 5-7 appended to ROADMAP.md
+- STATE.md updated to reflect v1.1 milestone
+- REQUIREMENTS.md traceability updated for all v1.1 requirements
+- 23/23 requirements mapped (100%)
 
 ### Next Session Actions
-1. `/gsd:plan-phase 1` - Create detailed plans for Data Foundation phase
-2. Implement PDF extraction pipeline with validation
-3. Design and implement database schema
-4. Test data quality validation
+1. `/gsd:plan-phase 5` — Create detailed plans for Phase 5: PDF Fix & Data Quality
+2. Fix pdf-extractor.ts truncation bug (lastTypeIdx logic — see research/PITFALLS.md)
+3. Audit existing holders table for truncated names before writing fix
+4. Confirm historical PDFs are retained on disk before committing to backfill approach
 
 ### Blockers
 None identified.
 
 ### Technical Debt
-None yet (project initialization).
+- Fuzzy search threshold for Indonesian names needs empirical tuning against production holders table (Phase 6)
+- Historical re-extraction feasibility depends on whether original PDF files are still on disk (verify at Phase 5 start)
 
 ---
 
 ## Research Notes
 
-### Research Confidence: MEDIUM
-- Stack recommendations based on training data (WebSearch unavailable due to rate limits)
-- IDX PDF format unknown - needs validation during Phase 1
-- Corporate action data sources unclear - needs research during Phase 3
-- Indonesian user preferences limited - validate with local traders during MVP
+### Research Confidence: HIGH (v1.1)
+- Stack confirmed: pg_trgm via Neon official docs; @xyflow/react React 19 peer-dep verified
+- PDF truncation mechanism identified in pdf-extractor.ts lines 90-114 (PITFALLS.md)
+- Architecture confirmed: join table pattern, GIN index, bipartite graph queries
+- Build order derives directly from FK dependencies (clean names → schema → aggregate)
 
 ### Research Flags
-- **Phase 1:** IDX PDF format unknown, likely needs deeper research for extraction strategy validation
-- **Phase 3:** Corporate action data sources unclear, may need research on IDX split/bonus issue history
+- **Phase 5:** No external research needed — code-level fix to existing pdf-extractor.ts; truncation mechanism already identified
+- **Phase 6:** No external research needed — junction table, pg_trgm GIN index, shadcn Command combobox all well-documented
+- **Phase 7:** No external research needed — standard GROUP BY JOIN SQL + Next.js cache invalidation
 
-### Gaps Identified
-- No access to current IDX PDFs for validation (test pdf-parse during Phase 1 planning)
-- No research on IDX historical split/bonus issue data sources (investigate during Phase 3)
-- Limited knowledge of Indonesian trading tools and feature preferences (survey during MVP)
-- Vercel Postgres free tier limits unknown (verify during Phase 1 setup)
-- No performance benchmarks (add monitoring from day one)
+### Gaps to Address
+- Fuzzy threshold tuning: pg_trgm threshold for Indonesian corporate names needs empirical validation against actual holders table (Phase 6)
+- PDF extractor regression coverage: full set of truncation patterns in existing holders table is unknown — audit first (Phase 5)
+- Historical re-extraction feasibility: confirm all historical PDFs are retained on disk before committing to backfill (Phase 5 start)
 
 ---
 
@@ -364,10 +325,10 @@ None yet (project initialization).
 **Auto-advance:** disabled
 
 **Workflow Settings:**
-- Research: ✅ Complete
-- Plan check: ✅ Enabled
-- Verifier: ✅ Enabled
-- Nyquist validation: ✅ Enabled
+- Research: Complete
+- Plan check: Enabled
+- Verifier: Enabled
+- Nyquist validation: Enabled
 
 ---
 
@@ -391,12 +352,12 @@ None yet (project initialization).
 **Planning Files:**
 - `.planning/PROJECT.md` - Project overview and constraints
 - `.planning/REQUIREMENTS.md` - Requirements specification with traceability
-- `.planning/ROADMAP.md` - Phase structure and success criteria
+- `.planning/ROADMAP.md` - Phase structure and success criteria (Phases 1-7)
 - `.planning/STATE.md` - This file (project memory)
-- `.planning/research/SUMMARY.md` - Research findings and implications
+- `.planning/research/SUMMARY.md` - Research findings and implications (v1.1)
 - `.planning/config.json` - Workflow configuration
 
-**Project Structure (To Be Created):**
+**Project Structure:**
 ```
 / (root)
 ├── app/                    # Next.js App Router
@@ -411,5 +372,5 @@ None yet (project initialization).
 
 ---
 
-*Last updated: 2026-03-14*
-*Session: 4 - Plan 03-01 Complete*
+*Last updated: 2026-03-15*
+*Session: 7 - v1.1 Roadmap Created (Phases 5-7)*

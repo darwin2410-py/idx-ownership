@@ -16,7 +16,7 @@
 | 2.1. Solve Error | 1/1 | Complete | 02.1-01 |
 | 3. User Experience | 3/3 | Complete | 03-01, 03-02, 03-03 |
 | 4. Enhancement Features | 3/3 | Complete | 04-01, 04-02, 04-03 |
-| 5. PDF Fix & Data Quality | 0/0 | Not started | - |
+| 5. PDF Fix & Data Quality | 1/2 | In Progress|  |
 | 6. Entity Data Model & Management | 0/0 | Not started | - |
 | 7. Aggregate Views | 0/0 | Not started | - |
 
@@ -182,7 +182,7 @@
 4. No regression in other extracted fields — stock codes, ownership percentages, and share counts remain correct
 5. Import script runs to completion without errors on all available historical PDFs
 
-**Plans:** 2 plans in 2 waves
+**Plans:** 1/2 plans executed
 
 **Wave 1:**
 - [ ] [05-01-PLAN.md](.planning/phases/05-pdf-fix-and-data-quality/05-01-PLAN.md) — Audit script + fix tryIDXConcatenatedStrategy() holder name truncation bug
