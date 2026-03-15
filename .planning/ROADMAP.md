@@ -17,7 +17,7 @@
 | 3. User Experience | 3/3 | Complete | 03-01, 03-02, 03-03 |
 | 4. Enhancement Features | 3/3 | Complete | 04-01, 04-02, 04-03 |
 | 5. PDF Fix & Data Quality | 2/2 | Complete   | 2026-03-15 |
-| 6. Entity Data Model & Management | 1/3 | In Progress|  |
+| 6. Entity Data Model & Management | 2/3 | In Progress|  |
 | 7. Aggregate Views | 0/0 | Not started | - |
 
 **v1.0 Progress:** 15/15 plans complete (100%)
@@ -207,7 +207,7 @@
 4. User can remove a holder alias from an entity, and that holder immediately reappears as an independent entry in all views
 5. All existing ownership records and holder data remain intact after any alias add or remove operation
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 **Wave 1:**
 - [ ] [06-01-PLAN.md](.planning/phases/06-entity-data-model-and-management/06-01-PLAN.md) — Schema (entities + entity_holders tables), cmdk install, pg_trgm extension + GIN index

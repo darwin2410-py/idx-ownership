@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-03-15T12:31:50.358Z"
+last_updated: "2026-03-15T12:37:00.697Z"
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # STATE - IDX Ownership Visualizer
@@ -36,18 +36,27 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 
 **Milestone:** v1.1 (Lineage & Entity Linking)
 **Phase:** 6 (Entity Data Model & Management) - IN PROGRESS
-**Plan:** 06-01 complete
-**Status:** Phase 6 Plan 01 complete — entities + entity_holders tables live in Neon, pg_trgm enabled, cmdk installed
+**Plan:** 06-02 complete
+**Status:** Phase 6 Plan 02 complete — entity-repository.ts (8 functions) + 4 API routes for entity CRUD, alias management, and pg_trgm fuzzy holder search
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
-**Progress Bar (v1.1):** ███░░░░░░░ 43% (3/7 plans)
+**Progress Bar (v1.1):** ████░░░░░░ 57% (4/7 plans)
 
 ### Next Action
-Execute Phase 6 Plan 02: Entity Management UI (entity creation, holder linking combobox with cmdk + pg_trgm fuzzy search).
+Execute Phase 6 Plan 03: Entity Management UI (entity creation form, holder linking combobox with cmdk + pg_trgm fuzzy search).
 
 ### Context File
-`.planning/phases/06-entity-data-model-and-management/06-01-SUMMARY.md` - Most recent plan summary
+`.planning/phases/06-entity-data-model-and-management/06-02-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
+**Session 11:** Phase 6 Plan 02 Complete
+- Created entity-repository.ts with 8 exported functions: createEntity, findAllEntities, findEntityById, findEntityByHolderId, findAliasesByEntityId, addAlias, removeAlias, searchHoldersByTrigram
+- pg_trgm fuzzy search uses db.execute() raw SQL with % operator; SET similarity_threshold = 0.2 before query
+- Created 4 API routes: POST/GET /api/entities, POST /api/entities/[id]/aliases, DELETE /api/entities/[id]/aliases/[holderId], GET /api/holders/search
+- 409 conflict on POST aliases returns ownerEntityName by calling findEntityByHolderId after catching PG 23505
+- DELETE alias removes from entity_holders only — ownership_records never touched
+- npm run build exits 0; all 4 routes visible in build output
+- Commits: 9bea7f6 (entity-repository.ts), f02941d (4 API routes)
+
 **Session 10:** Phase 6 Plan 01 Complete
 - Installed cmdk@1.1.1 for entity grouping Command combobox UI
 - Added entities table (id, name UNIQUE, description, created_at) to Drizzle schema
