@@ -61,7 +61,7 @@ function buildGraph(data: GraphData): { nodes: Node[]; edges: Edge[] } {
       id: s.emitenId,
       type: 'stock' as const,
       position: posMap.get(s.emitenId)!,
-      data: { code: s.emitenId, name: s.emitenName },
+      data: { code: s.emitenId, name: s.emitenName, percentage: s.totalPercentage },
       draggable: true,
     })),
   ];
@@ -70,11 +70,6 @@ function buildGraph(data: GraphData): { nodes: Node[]; edges: Edge[] } {
     id: `${CENTER_ID}-${s.emitenId}`,
     source: CENTER_ID,
     target: s.emitenId,
-    label: `${s.totalPercentage}%`,
-    labelStyle: { fontSize: 11, fontWeight: 500 },
-    labelBgStyle: { fill: 'white', opacity: 0.85 },
-    labelBgPadding: [4, 2] as [number, number],
-    labelBgBorderRadius: 4,
   }));
 
   return { nodes, edges };
