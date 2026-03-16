@@ -2,7 +2,7 @@
 
 **Project:** IDX Ownership Visualizer
 **Version:** 1.0 (MVP) + 1.1 (Lineage & Entity Linking)
-**Last Updated:** 2026-03-15
+**Last Updated:** 2026-03-16
 **Granularity:** Standard (5-8 phases expected)
 
 ---
@@ -20,6 +20,7 @@
 | 6. Entity Data Model & Management | 3/3 | Complete   | 2026-03-15 |
 | 7. Aggregate Views | 2/2 | Complete    | 2026-03-15 |
 | 8. Network Graph Visualization | 2/3 | In Progress|  |
+| 9. Graph UX Improvements | 0/2 | Planned | |
 
 **v1.0 Progress:** 15/15 plans complete (100%)
 **v1.1 Progress:** 0 plans complete (Not started)
@@ -285,8 +286,9 @@ Deferred to post-v1.1 releases:
 | ENTITY-03: User Dapat Hapus Alias dari Entity | Phase 6 | Pending | 06-02, 06-03 |
 | AGGR-01: Entity Profile Page | Phase 7 | Pending | TBD |
 | AGGR-02: Stock Detail Page Tampilkan Entity Aggregate | Phase 7 | Pending | TBD |
+| GRAPH-02: Graph UX Improvements | Phase 9 | Planned | 09-01, 09-02 |
 
-**Coverage:** 23/23 requirements mapped (100%) ✓
+**Coverage:** 24/24 requirements mapped (100%) ✓
 
 ---
 
@@ -308,6 +310,10 @@ Phase 5: PDF Fix & Data Quality (v1.1 — fix source data before grouping)
 Phase 6: Entity Data Model & Management (requires clean holder names)
     ↓
 Phase 7: Aggregate Views (requires entity grouping to be populated)
+    ↓
+Phase 8: Network Graph Visualization (interactive graph)
+    ↓
+Phase 9: Graph UX Improvements (polish)
 ```
 
 ---
@@ -386,5 +392,29 @@ Explicitly excluded from v1 and v1.1:
 
 ---
 
-*Last updated: 2026-03-15*
-*v1.0 complete. v1.1 phases 5-7 added. Phase 8 planned: 3 plans in 3 waves.*
+### Phase 9: Graph UX Improvements
+
+**Goal:** The graph visualization is polished and informative — edge thickness encodes ownership magnitude, tooltips show full emiten name, node size reflects ownership size, and a back button lets users return to stock detail easily
+
+**Requirements:** GRAPH-02
+
+**Depends on:** Phase 8
+
+**Success Criteria** (what must be TRUE):
+1. Edge thickness scales with ownership percentage (higher % = thicker line)
+2. Hovering over a stock node shows a tooltip with full emiten name and exact percentage
+3. Stock node size scales with ownership percentage (larger % = bigger circle)
+4. A back button or breadcrumb in the graph page header navigates back to stock detail
+5. Minimap is visible on the graph canvas for orientation with many nodes
+6. npm run build exits 0
+
+**Plans:** 2 plans in 1 wave
+
+**Wave 1 (Parallel):**
+- [ ] [09-01-PLAN.md](.planning/phases/09-graph-ux-improvements/09-01-PLAN.md) — MiniMap, edge strokeWidth scaling, dynamic node sizing, NodeToolbar hover tooltip
+- [ ] [09-02-PLAN.md](.planning/phases/09-graph-ux-improvements/09-02-PLAN.md) — Back navigation link in holder and entity graph page headers
+
+---
+
+*Last updated: 2026-03-16*
+*v1.0 complete. v1.1 phases 5-7 added. Phase 8 complete: network graph. Phase 9 planned: graph UX improvements.*
