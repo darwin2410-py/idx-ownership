@@ -15,7 +15,6 @@ const nodeTypes = {
 };
 
 type SimNode = { id: string; x?: number; y?: number };
-type SimLink = { source: string; target: string };
 
 function buildGraph(data: GraphData): { nodes: Node[]; edges: Edge[] } {
   const CENTER_ID = '__center__';
@@ -25,26 +24,21 @@ function buildGraph(data: GraphData): { nodes: Node[]; edges: Edge[] } {
     ...data.stocks.map((s) => ({ id: s.emitenId })),
   ];
 
-  const simLinks: SimLink[] = data.stocks.map((s) => ({
-    source: CENTER_ID,
-    target: s.emitenId,
-  }));
+  // Synchronous d3-force layout — evenly space stock nodes on a circle (forceRadial)
+  const radius = Math.max(200, data.stocks.length * 28);
 
-  // Synchronous d3-force layout — stop immediately, tick to convergence
   const simulation = d3Force
     .forceSimulation<SimNode>(simNodes)
-    .force('charge', d3Force.forceManyBody<SimNode>().strength(-400))
     .force(
-      'link',
-      d3Force
-        .forceLink<SimNode, SimLink>(simLinks)
-        .id((d) => d.id)
-        .distance(180)
+      'radial',
+      d3Force.forceRadial<SimNode>(radius, 0, 0)
+        .strength((d) => (d.id === CENTER_ID ? 0 : 1))
     )
+    .force('charge', d3Force.forceManyBody<SimNode>().strength(-80))
     .force('center', d3Force.forceCenter(0, 0))
     .stop();
 
-  for (let i = 0; i < 120; i++) simulation.tick();
+  for (let i = 0; i < 300; i++) simulation.tick();
 
   // Build position map
   const posMap = new Map(simNodes.map((n) => [n.id, { x: n.x ?? 0, y: n.y ?? 0 }]));
