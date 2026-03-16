@@ -20,7 +20,7 @@
 | 6. Entity Data Model & Management | 3/3 | Complete   | 2026-03-15 |
 | 7. Aggregate Views | 2/2 | Complete    | 2026-03-15 |
 | 8. Network Graph Visualization | 2/3 | In Progress|  |
-| 9. Graph UX Improvements | 1/2 | In Progress|  |
+| 9. Graph UX Improvements | 2/2 | Complete   | 2026-03-16 |
 
 **v1.0 Progress:** 15/15 plans complete (100%)
 **v1.1 Progress:** 0 plans complete (Not started)
@@ -408,7 +408,7 @@ Explicitly excluded from v1 and v1.1:
 5. Minimap is visible on the graph canvas for orientation with many nodes
 6. npm run build exits 0
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 **Wave 1 (Parallel):**
 - [ ] [09-01-PLAN.md](.planning/phases/09-graph-ux-improvements/09-01-PLAN.md) — MiniMap, edge strokeWidth scaling, dynamic node sizing, NodeToolbar hover tooltip
