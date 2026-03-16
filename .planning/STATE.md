@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-03-15T15:11:14.907Z"
+last_updated: "2026-03-16T03:37:58.833Z"
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 8
-  total_plans: 25
-  completed_plans: 24
+  total_plans: 27
+  completed_plans: 25
 ---
 
 # STATE - IDX Ownership Visualizer
@@ -36,19 +36,27 @@ v1.1 Lineage & Entity Linking — memungkinkan user menelusuri kepemilikan berda
 
 **Milestone:** v1.1 (Lineage & Entity Linking) - COMPLETE
 **Phase:** 7 (Aggregate Views) - COMPLETE
-**Plan:** 08-02 complete
-**Status:** In progress (Phase 8)
+**Plan:** 09-01 complete
+**Status:** In progress (Phase 9)
 **Progress Bar (v1.0):** ██████████ 100% (15/15 plans)
 **Progress Bar (v1.1):** ██████████ 100% (7/7 plans)
-**Progress Bar (v1.2):** [██░░░░░░░░] 20% (2/10 plans — Phase 8 graph UI components done)
+**Progress Bar (v1.2):** [█████████░] 93% (25/27 plans — Phase 9 graph UX plan 01 done)
 
 ### Next Action
-Phase 8 Plan 03: Build /graph/holder/[name] and /graph/entity/[id] page routes + wire holder name links on /stocks/[code].
+Phase 9 Plan 02 (if any): Next graph UX improvement plan, or phase complete.
 
 ### Context File
-`.planning/phases/08-network-graph-visualization/08-02-SUMMARY.md` - Most recent plan summary
+`.planning/phases/09-graph-ux-improvements/09-01-SUMMARY.md` - Most recent plan summary
 
 ### Recent Work
+**Session 15:** Phase 9 Plan 01 Complete — Graph UX Polish
+- Added MiniMap to ReactFlow canvas (teal/amber color coding, circular nodes, pannable)
+- buildGraph() computes maxPct; edges carry style.strokeWidth [1, 8] proportional to ownership %
+- Nodes carry data.size [72, 120]px proportional to ownership %; radius multiplier increased 28 → 36
+- StockNode: size field added to type, inline style replaces static w-24/h-24, NodeToolbar tooltip on hover
+- npm run build exits 0; both files pass TypeScript
+- Commits: 4f36dce (graph-canvas), cd63783 (stock-node)
+
 **Session 14:** Phase 7 Plan 02 Complete (Phase 7 COMPLETE — v1.1 COMPLETE)
 - Added findOwnershipByStockWithEntityContext() to ownership-repository.ts with LEFT JOINs to entity_holders + entities
 - Exported HolderRowWithEntity type with holderId, entityId, entityName fields
@@ -301,6 +309,16 @@ Phase 8 Plan 03: Build /graph/holder/[name] and /graph/entity/[id] page routes +
     - Rationale: @xyflow/react v12 TypeScript types only accept BackgroundVariant enum values, not string literals like "dots"; string literal causes TS2322 type error
     - Outcome: Implemented (graph-canvas.tsx, Phase 8, Plan 02)
     - Date: 2026-03-15
+
+27. **Node size range [72, 120]px and edge width range [1, 8]px for ownership visualization** (Decision ID: KD-027)
+    - Rationale: Minimum sizes ensure smallest holders remain visible and clickable; maxPct guard of 1 prevents division by zero; ranges give enough visual spread without overcrowding
+    - Outcome: Implemented (graph-canvas.tsx + stock-node.tsx, Phase 9, Plan 01)
+    - Date: 2026-03-16
+
+28. **NodeToolbar for stock hover tooltip (not Radix/shadcn Tooltip)** (Decision ID: KD-028)
+    - Rationale: @xyflow/react NodeToolbar is natively supported and positions correctly relative to ReactFlow node coordinates; external tooltip libraries have z-index/portal conflicts with the canvas overlay
+    - Outcome: Implemented (stock-node.tsx, Phase 9, Plan 01)
+    - Date: 2026-03-16
 
 26. **onNodeClick + router.push for graph navigation (not Link inside node)** (Decision ID: KD-026)
     - Rationale: Wrapping ReactFlow custom nodes in Next.js Link interferes with the library's drag detection; click-based navigation via onNodeClick callback is the correct pattern
